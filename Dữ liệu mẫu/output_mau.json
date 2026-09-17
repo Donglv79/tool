@@ -1,0 +1,188 @@
+{
+  "request_id": "348ee7f5-8dc7-48ba-acca-55a2c97e950e",
+  "data": {
+    "summary": {
+      "visitCount": 1,
+      "latestVisitDate": "2026-06-05",
+      "specialties": [
+        "Nội tiêu hóa"
+      ],
+      "oneLiner": "Tăng huyết áp (từ 2021), viêm dạ dày cấp chưa rõ nguyên nhân (ghi nhận trong hồ sơ từ 05/06/2026) - không có đơn thuốc còn hiệu lực - lượt khám gần nhất 05/06 tại Nội tiêu hóa",
+      "alerts": [],
+      "sections": [
+        {
+          "order": 1,
+          "title": "Tiền sử nền",
+          "items": [
+            {
+              "content": "Tăng huyết áp",
+              "since": "2021"
+            }
+          ],
+          "familyHistory": [
+            "Cha có tiền sử tăng huyết áp"
+          ],
+          "obstetricHistory": "",
+          "menstrualHistory": ""
+        },
+        {
+          "order": 2,
+          "title": "Thuốc đang sử dụng",
+          "byPrescription": [
+            {
+              "name": "Esomeprazole 40mg",
+              "dosage": "40mg",
+              "frequency": "1 viên trước ăn sáng",
+              "prescribedDate": "2026-06-05",
+              "prescriptionCode": "DT20260605001",
+              "specialty": "Nội tiêu hóa",
+              "durationEndDate": "2026-06-19"
+            }
+          ],
+          "selfReported": [
+            {
+              "name": "Amlodipine 5mg",
+              "dosage": "1 viên/ngày",
+              "route": "Uống",
+              "askedDate": "2026-06-05"
+            },
+            {
+              "name": "Vitamin B Complex",
+              "dosage": "1 viên/ngày",
+              "route": "Uống",
+              "askedDate": "2026-06-05"
+            }
+          ]
+        },
+        {
+          "order": 3,
+          "title": "Tình trạng bệnh nhân",
+          "latestBySpecialty": [
+            {
+              "visitDate": "2026-06-05",
+              "specialty": "Nội tiêu hóa",
+              "vitalSigns": {
+                "pulse": 96,
+                "temperature": 37.8,
+                "bloodPressure": "118/76",
+                "spo2": 98,
+                "respiratoryRate": 20,
+                "weight": 68,
+                "height": 170,
+                "bmi": 23.5
+              },
+              "clinicalFindings": "Bệnh nhân tỉnh, tiếp xúc tốt, thể trạng trung bình. Hệ tim mạch và hô hấp ghi nhận tim đều, phổi trong, không rale. Khám tiêu hóa và các cơ quan khác cho thấy gan lách không sờ thấy, không chướng bụng. Khám chuyên khoa ghi nhận ấn đau vùng thượng vị, không phản ứng thành bụng. Đánh giá phát triển tinh thần bình thường, phát triển vận động bình thường, dinh dưỡng bình thường và đã tiêm chủng đầy đủ theo khuyến cáo.",
+              "specialtyFindings": {
+                "obstetrics": null,
+                "pediatrics": null
+              },
+              "abnormalResults": [
+                {
+                  "name": "Nội soi dạ dày",
+                  "result": "Niêm mạc hang vị sung huyết",
+                  "abnormal": true
+                },
+                {
+                  "name": "Bạch cầu",
+                  "result": "11.2 G/L",
+                  "abnormal": true
+                },
+                {
+                  "name": "Test HP",
+                  "result": "âm tính",
+                  "abnormal": false
+                }
+              ],
+              "diagnoses": [
+                {
+                  "code": "K29.7",
+                  "name": "Viêm dạ dày cấp chưa rõ nguyên nhân",
+                  "description": ""
+                },
+                {
+                  "code": "I10",
+                  "name": "Tăng huyết áp vô căn",
+                  "description": "Đang điều trị ngoại trú"
+                }
+              ],
+              "treatment": [
+                "Esomeprazole 40mg x 1 viên/ngày trước ăn sáng",
+                "Điều trị nội khoa và theo dõi triệu chứng tiêu hóa"
+              ],
+              "advice": [
+                "Tránh thức ăn cay nóng, hạn chế cà phê và rượu bia",
+                "Tái khám nếu triệu chứng tăng"
+              ],
+              "trends": []
+            }
+          ]
+        },
+        {
+          "order": 4,
+          "title": "Việc cần theo dõi tiếp",
+          "followUpItems": [
+            "Tránh thức ăn cay nóng, hạn chế cà phê và rượu bia; tái khám nếu triệu chứng tăng"
+          ],
+          "followUp": [
+            {
+              "specialty": "Nội tiêu hóa",
+              "date": "2026-06-12",
+              "valid": true,
+              "note": "quá hạn từ 12/06"
+            }
+          ]
+        }
+      ]
+    },
+    "timeline": [
+      {
+        "visitDate": "2026-06-05",
+        "specialty": "Nội tiêu hóa",
+        "visitCode": "KCB20260605001",
+        "summary": "Bệnh nhân đến khám vì đau bụng vùng thượng vị kèm buồn nôn, được chẩn đoán viêm dạ dày cấp và tăng huyết áp.",
+        "details": {
+          "clinical": "Đau âm ỉ vùng thượng vị, tăng sau ăn, không sốt cao, không tiêu chảy. Mạch 96 · HA 118/76 · nặng 68kg. Ấn đau vùng thượng vị, không phản ứng thành bụng.",
+          "paraclinical": [
+            {
+              "name": "Nội soi dạ dày",
+              "result": "niêm mạc hang vị sung huyết (bất thường)"
+            },
+            {
+              "name": "Test HP",
+              "result": "âm tính"
+            },
+            {
+              "name": "Bạch cầu",
+              "result": "11.2 G/L (bất thường)"
+            }
+          ],
+          "diagnosis": [
+            {
+              "code": "K29.7",
+              "name": "Viêm dạ dày cấp chưa rõ nguyên nhân",
+              "description": ""
+            },
+            {
+              "code": "I10",
+              "name": "Tăng huyết áp vô căn",
+              "description": "Đang điều trị ngoại trú"
+            }
+          ],
+          "treatment": [
+            "Esomeprazole 40mg x 1 viên/ngày trước ăn sáng"
+          ],
+          "prescription": [
+            "Esomeprazole 40mg 1 viên trước ăn sáng (14 ngày)"
+          ],
+          "specialtyFindings": {},
+          "changesFromPrevious": [],
+          "advice": [
+            "Tránh thức ăn cay nóng, hạn chế cà phê và rượu bia; tái khám nếu triệu chứng tăng",
+            "Hẹn tái khám: 12/06/2026"
+          ]
+        }
+      }
+    ]
+  },
+  "errors": {}
+}

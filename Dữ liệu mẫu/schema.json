@@ -1,0 +1,135 @@
+{
+  "request_id": "",
+  "data": {
+    "summary": {
+      "visitCount": 0,
+      "latestVisitDate": "",
+      "specialties": [],
+      "oneLiner": "",
+      "alerts": [],
+      "sections": [
+        {
+          "order": 1,
+          "title": "",
+          "items": [
+            {
+              "content": "",
+              "since": ""
+            }
+          ],
+          "familyHistory": [],
+          "obstetricHistory": "",
+          "menstrualHistory": ""
+        },
+        {
+          "order": 2,
+          "title": "",
+          "byPrescription": [
+            {
+              "name": "",
+              "dosage": "",
+              "frequency": "",
+              "prescribedDate": "",
+              "prescriptionCode": "",
+              "specialty": "",
+              "durationEndDate": ""
+            }
+          ],
+          "selfReported": [
+            {
+              "name": "",
+              "dosage": "",
+              "route": "",
+              "askedDate": ""
+            }
+          ]
+        },
+        {
+          "order": 3,
+          "title": "",
+          "latestBySpecialty": [
+            {
+              "visitDate": "",
+              "specialty": "",
+              "vitalSigns": {
+                "pulse": 0,
+                "temperature": 0.0,
+                "bloodPressure": "",
+                "spo2": 0,
+                "respiratoryRate": 0,
+                "weight": 0.0,
+                "height": 0.0,
+                "bmi": 0.0
+              },
+              "clinicalFindings": "",
+              "specialtyFindings": {
+                "obstetrics": null,
+                "pediatrics": null
+              },
+              "abnormalResults": [
+                {
+                  "name": "",
+                  "result": "",
+                  "abnormal": false
+                }
+              ],
+              "diagnoses": [
+                {
+                  "code": "",
+                  "name": "",
+                  "description": ""
+                }
+              ],
+              "treatment": [],
+              "advice": [],
+              "trends": []
+            }
+          ]
+        },
+        {
+          "order": 4,
+          "title": "",
+          "followUpItems": [],
+          "followUp": [
+            {
+              "specialty": "",
+              "date": "",
+              "valid": false,
+              "note": ""
+            }
+          ]
+        }
+      ]
+    },
+    "timeline": [
+      {
+        "visitDate": "",
+        "specialty": "",
+        "visitCode": "",
+        "summary": "",
+        "details": {
+          "clinical": "",
+          "paraclinical": [
+            {
+              "name": "",
+              "result": ""
+            }
+          ],
+          "diagnosis": [
+            {
+              "code": "",
+              "name": "",
+              "description": ""
+            }
+          ],
+          "treatment": [],
+          "prescription": [],
+          "specialtyFindings": {},
+          "changesFromPrevious": [],
+          "advice": []
+        }
+      }
+    ]
+  },
+  "errors": {}
+}

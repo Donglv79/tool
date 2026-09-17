@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VinUni - Medical Data Mapper</title>
+    <link rel="stylesheet" href="styles.css?v=2">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="background-elements">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <div class="container">
+        <main class="glass-panel">
+            <div class="mode-toggle">
+                <button id="btn-excel" class="toggle-btn active">
+                    <i class="fa-solid fa-file-excel"></i> Xử lý Excel
+                </button>
+                <button id="btn-json" class="toggle-btn">
+                    <i class="fa-solid fa-file-code"></i> Xử lý JSON
+                </button>
+            </div>
+
+            <!-- Excel Section -->
+            <div id="excel-section">
+                <div class="config-section" id="excel-config">
+                    <label for="json-column-input">Tên Cột Chứa Input JSON:</label>
+                    <input type="text" id="json-column-input" value="Input JSON" placeholder="Ví dụ: Input JSON">
+                </div>
+
+                <div class="upload-area" id="drop-zone">
+                    <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                    <h3 id="upload-title">Kéo thả file Excel vào đây</h3>
+                    <p id="upload-subtitle">Hoặc click để chọn file (.xlsx, .xls)</p>
+                    <input type="file" id="file-input" accept=".xlsx, .xls" hidden>
+                    <div class="selected-file" id="selected-file" style="display: none;">
+                        <i class="fa-solid fa-file-lines"></i>
+                        <span id="file-name">filename.xlsx</span>
+                        <button id="remove-file" class="icon-btn"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                </div>
+
+                <div class="action-section">
+                    <button id="process-btn" class="primary-btn" disabled>
+                        <span class="btn-text">Bắt Đầu Xử Lý</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- JSON Section -->
+            <div id="json-section" style="display: none;">
+                <div class="json-compare-container">
+                    <div class="json-box">
+                        <label for="json-input-text">Input JSON (Dán vào đây)</label>
+                        <textarea id="json-input-text" placeholder="Dán nội dung JSON vào đây..."></textarea>
+                    </div>
+                    <div class="json-box">
+                        <label for="json-output-text">Output JSON (Kết quả)</label>
+                        <textarea id="json-output-text" readonly placeholder="Kết quả sẽ hiển thị ở đây..."></textarea>
+                    </div>
+                </div>
+                <div class="action-section json-actions">
+                    <button id="process-json-btn" class="primary-btn">
+                        <span class="btn-text">Chuyển đổi</span>
+                        <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                    </button>
+                    <button id="copy-json-btn" class="secondary-btn" style="display: none;">
+                        <span class="btn-text">Copy Kết Quả</span>
+                        <i class="fa-solid fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="status-box" id="status-box" style="display: none;">
+                <div class="loader" id="loader"></div>
+                <p id="status-text">Đang xử lý dữ liệu...</p>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

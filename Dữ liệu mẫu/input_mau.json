@@ -1,0 +1,107 @@
+{
+  "patient": {
+    "pseudo_id": "00000000-0000-4000-8000-000000000002"
+  },
+  "visits": [
+    {
+      "visit_date": "2026-06-05",
+      "visit_code": "KCB20260605001",
+      "specialty": "Nội tiêu hóa",
+      "clinic": "Phòng khám Nội tiêu hóa",
+      "chief_complaint": "Đau bụng vùng thượng vị 1 ngày, kèm buồn nôn",
+      "vitals": {
+        "pulse": 96,
+        "temperature": 37.8,
+        "blood_pressure": "118/76",
+        "spo2": "98",
+        "respiratory_rate": "20",
+        "height_cm": 170,
+        "weight_kg": "68",
+        "bmi": "23.5"
+      },
+      "history": {
+        "past_medical_history": "Tăng huyết áp 5 năm, kiểm soát ổn định",
+        "family_history": "Cha có tiền sử tăng huyết áp",
+        "allergy": "Không có dị ứng",
+        "medical_history": "Đau âm ỉ vùng thượng vị, tăng sau ăn, không sốt cao, không tiêu chảy",
+        "medication_status": true,
+        "current_medications": [
+          {
+            "name": "Amlodipine 5mg",
+            "dosage": "1 viên/ngày",
+            "route": "Uống",
+            "last_dose_date": "2026-06-05"
+          },
+          {
+            "name": "Vitamin B Complex",
+            "dosage": "1 viên/ngày",
+            "route": "Uống",
+            "last_dose_date": "2026-06-04"
+          }
+        ],
+        "obstetric_history": "không có thông tin",
+        "menstrual_history": "không có thông tin"
+      },
+      "examination": {
+        "general_examination": "Tỉnh, tiếp xúc tốt, thể trạng trung bình",
+        "specialty_examination": "Ấn đau vùng thượng vị, không phản ứng thành bụng",
+        "cardiovascular_respiratory_examination": "Tim đều, phổi trong, không rale",
+        "other_systems_examination": "Gan lách không sờ thấy, không chướng bụng",
+        "nutrition_assessment": "Dinh dưỡng bình thường",
+        "vaccination_assessment": "Đã tiêm chủng đầy đủ theo khuyến cáo",
+        "motor_development": "Bình thường",
+        "mental_development": "Bình thường"
+      },
+      "labs": {
+        "paraclinical_result": "Nội soi dạ dày: niêm mạc hang vị sung huyết; Test HP âm tính; Bạch cầu 11.2 G/L",
+        "abnormal_result": "Niêm mạc hang vị sung huyết; Bạch cầu 11.2 G/L"
+      },
+      "diagnosis": {
+        "diagnosis_from_referring_facility": "",
+        "diagnosis_primary": [
+          {
+            "code": "K29.7",
+            "name": "Viêm dạ dày cấp chưa rõ nguyên nhân",
+            "description": null
+          }
+        ],
+        "diagnosis_comorbidities": [
+          {
+            "code": "I10",
+            "name": "Tăng huyết áp vô căn",
+            "description": "Đang điều trị ngoại trú"
+          }
+        ],
+        "diagnosis_text": "Viêm dạ dày cấp chưa rõ nguyên nhân; Tăng huyết áp"
+      },
+      "plan": {
+        "prescription": "Esomeprazole 40mg x 1 viên/ngày trước ăn sáng",
+        "doctor_advice": "Tránh thức ăn cay nóng, hạn chế cà phê và rượu bia; tái khám nếu triệu chứng tăng",
+        "treatment_plan": "Điều trị nội khoa và theo dõi triệu chứng tiêu hóa",
+        "followup_date": "2026-06-12"
+      },
+      "prescriptions": [
+        {
+          "prescription_code": "DT20260605001",
+          "prescribed_date": "2026-06-05",
+          "prescriber": "BS Nguyễn Văn A",
+          "specialty": "Nội tiêu hóa",
+          "diagnosis_on_prescription": "Viêm dạ dày cấp",
+          "allergy_on_prescription": "Không có",
+          "items": [
+            {
+              "name": "Esomeprazole 40mg",
+              "dosage_instruction": "1 viên trước ăn sáng",
+              "route": "Uống",
+              "quantity": "14 viên",
+              "duration": "14 ngày",
+              "stop_date": "2026-06-19",
+              "note": "Dùng trước bữa sáng 30 phút"
+            }
+          ],
+          "doctor_note": "Tái khám sau 1 tuần nếu không cải thiện"
+        }
+      ]
+    }
+  ]
+}
