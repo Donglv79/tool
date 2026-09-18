@@ -1,5 +1,6 @@
 import uuid
 import re
+import difflib
 from typing import Dict, Any, List
 from ai_synthesizer import (
     generate_one_liner,
@@ -27,6 +28,37 @@ def format_sentence(text):
     if not text:
         return text
     return text[0].upper() + text[1:]
+
+def deduplicate_diagnoses(diags):
+    unique_diags = []
+    for d in diags:
+        code = d.get("code") or ""
+        code = code.strip()
+        name = d.get("name") or ""
+        name = name.strip().lower()
+        
+        is_duplicate = False
+        for u in unique_diags:
+            u_code = (u.get("code") or "").strip()
+            u_name = (u.get("name") or "").strip().lower()
+            
+            if code and u_code and code == u_code:
+                is_duplicate = True
+                break
+                
+            if name and u_name:
+                if name in u_name or u_name in name:
+                    is_duplicate = True
+                    break
+                
+                similarity = difflib.SequenceMatcher(None, name, u_name).ratio()
+                if similarity > 0.8:
+                    is_duplicate = True
+                    break
+                    
+        if not is_duplicate:
+            unique_diags.append(d)
+    return unique_diags
 
 def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
     visits = input_data.get("visits", [])
@@ -147,16 +179,15 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
             "name": d.get("name", ""),
             "description": d.get("description", "") or ""
         })
+    diagnoses = deduplicate_diagnoses(diagnoses)
 
     plan_data = latest_visit.get("plan", {})
     treatment = []
-    if plan_data.get("prescription"):
-        treatment.append(plan_data.get("prescription"))
+    if plan_data.get("treatment_plan"):
+        treatment.append(plan_data.get("treatment_plan"))
 
     advice_raw = plan_data.get("doctor_advice", "")
     advice = [format_sentence(a) for a in advice_raw.split(";") if a.strip()] if advice_raw else []
-    if plan_data.get("treatment_plan"):
-        advice.append(format_sentence(plan_data.get("treatment_plan")))
 
     abnormal_results = []
     abnormal_raw = latest_visit.get("labs", {}).get("abnormal_result", "")
@@ -248,7 +279,14 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
     }
 
     # Section 4: Việc cần theo dõi tiếp
-    follow_up_items = [format_sentence(a) for a in advice_raw.split(";") if a.strip()] if advice_raw else []
+    follow_up_items = []
+    if advice_raw:
+        spec = latest_visit.get("specialty", "")
+        if spec:
+            follow_up_items.append(f"{spec}: {format_sentence(advice_raw)}")
+        else:
+            follow_up_items.append(format_sentence(advice_raw))
+    
     follow_up = []
     if plan_data.get("followup_date"):
         follow_up.append({
@@ -274,6 +312,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
             v_diagnoses.append({"code": d.get("code", ""), "name": d.get("name", ""), "description": d.get("description", "") or ""})
         for d in v_diag.get("diagnosis_comorbidities", []):
             v_diagnoses.append({"code": d.get("code", ""), "name": d.get("name", ""), "description": d.get("description", "") or ""})
+        v_diagnoses = deduplicate_diagnoses(v_diagnoses)
         
         v_plan = v.get("plan", {})
         v_treatment = []
@@ -289,17 +328,6 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
                 v_presc.append(item.get("name", ""))
         
         v_para = []
-        v_para_raw = v.get("labs", {}).get("paraclinical_result", "")
-        if v_para_raw:
-            parts = v_para_raw.split(";")
-            for part in parts:
-                part = part.strip()
-                if not part: continue
-                if ":" in part:
-                    name_part, result_part = part.split(":", 1)
-                    v_para.append({"name": name_part.strip(), "result": result_part.strip()})
-                else:
-                    v_para.append({"name": part, "result": ""})
 
         timeline_summary = generate_timeline_summary(v.get("chief_complaint", ""), v_diag)
         clinical_details = generate_timeline_clinical_details(v.get("history", {}), v.get("vitals", {}), v.get("examination", {}))

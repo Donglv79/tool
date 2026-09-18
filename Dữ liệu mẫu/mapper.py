@@ -1,5 +1,6 @@
 import json
 import uuid
+import difflib
 
 def load_json(filepath):
     with open(filepath, 'r', encoding='utf-8') as f:
@@ -29,6 +30,37 @@ def format_sentence(text):
     if not text:
         return text
     return text[0].upper() + text[1:]
+
+def deduplicate_diagnoses(diags):
+    unique_diags = []
+    for d in diags:
+        code = d.get("code") or ""
+        code = code.strip()
+        name = d.get("name") or ""
+        name = name.strip().lower()
+        
+        is_duplicate = False
+        for u in unique_diags:
+            u_code = (u.get("code") or "").strip()
+            u_name = (u.get("name") or "").strip().lower()
+            
+            if code and u_code and code == u_code:
+                is_duplicate = True
+                break
+                
+            if name and u_name:
+                if name in u_name or u_name in name:
+                    is_duplicate = True
+                    break
+                
+                similarity = difflib.SequenceMatcher(None, name, u_name).ratio()
+                if similarity > 0.8:
+                    is_duplicate = True
+                    break
+                    
+        if not is_duplicate:
+            unique_diags.append(d)
+    return unique_diags
 
 def main():
     input_data = load_json('input_that.json')
@@ -116,11 +148,10 @@ def main():
                     "name": d.get('name', ''),
                     "description": d.get('description', '') or ""
                 })
+            all_diags = deduplicate_diagnoses(all_diags)
                 
             plan = v.get('plan', {})
             treatment = []
-            if plan.get('prescription') and plan.get('prescription') != 'Không':
-                treatment.append(plan.get('prescription'))
             if plan.get('treatment_plan'):
                 treatment.append(plan.get('treatment_plan'))
                 
@@ -155,8 +186,13 @@ def main():
     followups = []
     if visits:
         latest_plan = visits[0].get('plan', {})
-        if latest_plan.get('doctor_advice'):
-            followup_items.extend([format_sentence(a) for a in latest_plan.get('doctor_advice').split(";") if a.strip()])
+        adv = latest_plan.get('doctor_advice', '').strip()
+        if adv:
+            spec = visits[0].get('specialty', '')
+            if spec:
+                followup_items.append(f"{spec}: {format_sentence(adv)}")
+            else:
+                followup_items.append(format_sentence(adv))
         if latest_plan.get('followup_date'):
             followups.append({
                 "specialty": visits[0].get('specialty', ''),
@@ -206,6 +242,7 @@ def main():
                 "name": d.get('name', ''),
                 "description": d.get('description', '') or ""
             })
+        all_diags = deduplicate_diagnoses(all_diags)
             
         plan = v.get('plan', {})
         treatment = []
@@ -220,6 +257,8 @@ def main():
         advice = []
         if plan.get('doctor_advice'):
             advice.extend([format_sentence(a) for a in plan.get('doctor_advice').split(";") if a.strip()])
+        if plan.get('treatment_plan'):
+            advice.append(format_sentence(plan.get('treatment_plan')))
             
         timeline.append({
             "visitDate": v.get('visit_date', ''),

@@ -1,5 +1,5 @@
 {
-  "request_id": "56dc539e-e9f1-47d7-8be7-21d6edc91e32",
+  "request_id": "4e5eb366-e3a8-4607-ac0e-ad8a9f815230",
   "data": {
     "summary": {
       "visitCount": 3,
@@ -48,7 +48,7 @@
               "prescribedDate": "2026-08-15",
               "prescriptionCode": "DT20260815003",
               "specialty": "Nội cơ xương khớp",
-              "durationEndDate": ""
+              "durationEndDate": null
             }
           ],
           "selfReported": [
