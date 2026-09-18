@@ -1,0 +1,301 @@
+{
+  "patient": {
+    "pseudo_id": "2e0c4d90-54a0-5706-b66c-ce47589f0a08"
+  },
+  "visits": [
+    {
+      "visit_date": "2026-06-23",
+      "visit_code": "KCB20260623001",
+      "specialty": "Nội đa khoa",
+      "clinic": "PK Nội đa khoa",
+      "chief_complaint": "Khám kiểm tra mỡ máu",
+      "vitals": {
+        "pulse": 79,
+        "temperature": 36.8,
+        "blood_pressure": "123/71",
+        "spo2": "97",
+        "respiratory_rate": "18",
+        "height_cm": 170.2,
+        "weight_kg": "75",
+        "bmi": "25.9"
+      },
+      "history": {
+        "past_medical_history": "Rối loạn lipid máu, chưa đều thuốc",
+        "family_history": "Mẹ có rối loạn lipid máu",
+        "allergy": "Không ghi nhận",
+        "medical_history": "Bệnh nhân có tiền sử rối loạn lipid máu, chưa đều thuốc. Nay đến khám kiểm tra mỡ máu. Hiện chưa ghi nhận dấu hiệu nặng kèm theo.",
+        "medication_status": true,
+        "current_medications": [
+          {
+            "name": "Rosuvastatin 10 mg",
+            "dosage": "1 viên buổi tối, dùng duy trì",
+            "route": "Uống",
+            "last_dose_date": null
+          }
+        ],
+        "obstetric_history": "không có thông tin",
+        "menstrual_history": "không có thông tin"
+      },
+      "examination": {
+        "general_examination": "Bệnh nhân tỉnh, tiếp xúc tốt. Thể trạng trung bình. Không vàng da, không phù. Hạch ngoại vi không sờ thấy.",
+        "specialty_examination": "Tỉnh, thể trạng trung bình. Tim phổi chưa ghi nhận bất thường. Bụng mềm.",
+        "cardiovascular_respiratory_examination": "Tim đều, T1 T2 rõ, không âm thổi. Lồng ngực cân đối, phổi thông khí đều, không ran.",
+        "other_systems_examination": "Chưa ghi nhận bất thường",
+        "nutrition_assessment": "không có thông tin",
+        "vaccination_assessment": "không có thông tin",
+        "motor_development": "không có thông tin",
+        "mental_development": "không có thông tin"
+      },
+      "labs": {
+        "paraclinical_result": "Cholesterol toàn phần tăng nhẹ, LDL-C trên mục tiêu",
+        "abnormal_result": ""
+      },
+      "diagnosis": {
+        "diagnosis_from_referring_facility": "",
+        "diagnosis_primary": [
+          {
+            "code": "E78.5",
+            "name": "Rối loạn lipid máu",
+            "description": null
+          }
+        ],
+        "diagnosis_comorbidities": [],
+        "diagnosis_text": "Rối loạn lipid máu (E78.5)"
+      },
+      "plan": {
+        "prescription": "Không",
+        "doctor_advice": "Duy trì vận động 150 phút/tuần; kiểm tra lipid và men gan sau 2-3 tháng",
+        "treatment_plan": "Kê đơn statin, tư vấn ăn giảm mỡ bão hòa",
+        "followup_date": null
+      },
+      "prescriptions": [
+        {
+          "prescription_code": "DT20260623001",
+          "prescribed_date": "2026-06-23",
+          "prescriber": "BS. Vũ Minh Trang",
+          "specialty": "Nội đa khoa",
+          "diagnosis_on_prescription": "Rối loạn lipid máu (E78.5)",
+          "allergy_on_prescription": "Không ghi nhận",
+          "items": [
+            {
+              "name": "Rosuvastatin 10 mg",
+              "dosage_instruction": "1 viên buổi tối",
+              "route": "Uống",
+              "quantity": "03 viên",
+              "duration": "3 ngày",
+              "stop_date": null,
+              "note": ""
+            }
+          ],
+          "doctor_note": ""
+        }
+      ]
+    },
+    {
+      "visit_date": "2026-07-25",
+      "visit_code": "KCB20260725002",
+      "specialty": "Nội tiết",
+      "clinic": "PK Nội tiết",
+      "chief_complaint": "Khám định kỳ bệnh tuyến giáp",
+      "vitals": {
+        "pulse": 79,
+        "temperature": 36.9,
+        "blood_pressure": "123/73",
+        "spo2": "98",
+        "respiratory_rate": "18",
+        "height_cm": 170.2,
+        "weight_kg": "75.4",
+        "bmi": "26"
+      },
+      "history": {
+        "past_medical_history": "Rối loạn lipid máu; Viêm tuyến giáp tự miễn phát hiện trước đây",
+        "family_history": "Chị gái có bệnh tuyến giáp",
+        "allergy": "Không ghi nhận",
+        "medical_history": "Bệnh nhân có tiền sử viêm tuyến giáp tự miễn phát hiện trước đây. Nay đến khám định kỳ bệnh tuyến giáp. Hiện chưa ghi nhận dấu hiệu nặng kèm theo.",
+        "medication_status": true,
+        "current_medications": [
+          {
+            "name": "Panadol 500mg",
+            "dosage": "1 viên/lần, ngày 2 lần khi đau hoặc sốt, dùng 2 ngày (tổng số 04 viên)",
+            "route": "Uống",
+            "last_dose_date": null
+          },
+          {
+            "name": "Vitamin C 1g",
+            "dosage": "1 viên/ngày, dùng 2 ngày (tổng số 02 viên)",
+            "route": "Uống",
+            "last_dose_date": null
+          },
+          {
+            "name": "Rosuvastatin 10 mg",
+            "dosage": "1 viên buổi tối, dùng duy trì",
+            "route": "Uống",
+            "last_dose_date": null
+          }
+        ],
+        "obstetric_history": "không có thông tin",
+        "menstrual_history": "không có thông tin"
+      },
+      "examination": {
+        "general_examination": "Tỉnh, tiếp xúc tốt, thể trạng trung bình, da niêm mạc hồng, không phù, hạch ngoại vi không sưng đau.",
+        "specialty_examination": "Không biểu hiện cường giáp rõ. Tuyến giáp độ 0-I, không đau.",
+        "cardiovascular_respiratory_examination": "Không tím môi đầu chi. Tim nhịp đều. Không khó thở, phổi không ran.",
+        "other_systems_examination": "Bụng mềm, không đau; không phù chi",
+        "nutrition_assessment": "không có thông tin",
+        "vaccination_assessment": "không có thông tin",
+        "motor_development": "không có thông tin",
+        "mental_development": "không có thông tin"
+      },
+      "labs": {
+        "paraclinical_result": "TSH 4.66 µIU/mL; FT4 10.6 pmol/L; anti-TPO dương tính",
+        "abnormal_result": ""
+      },
+      "diagnosis": {
+        "diagnosis_from_referring_facility": "",
+        "diagnosis_primary": [
+          {
+            "code": "E06.3",
+            "name": "Viêm tuyến giáp tự miễn",
+            "description": null
+          }
+        ],
+        "diagnosis_comorbidities": [
+          {
+            "code": "E78.5",
+            "name": "Rối loạn lipid máu",
+            "description": null
+          }
+        ],
+        "diagnosis_text": "Viêm tuyến giáp tự miễn (E06.3); Rối loạn lipid máu (E78.5)"
+      },
+      "plan": {
+        "prescription": "Không",
+        "doctor_advice": "Tái khám định kỳ, xét nghiệm TSH/FT4; khám sớm khi hồi hộp, sút cân hoặc mệt nhiều",
+        "treatment_plan": "Kê đơn.\nTư vấn theo dõi bệnh và tái khám định kỳ.",
+        "followup_date": null
+      },
+      "prescriptions": [
+        {
+          "prescription_code": "DT20260725002",
+          "prescribed_date": "2026-07-25",
+          "prescriber": "BS. Nguyễn Đức Anh",
+          "specialty": "Nội tiết",
+          "diagnosis_on_prescription": "Viêm tuyến giáp tự miễn (E06.3); Rối loạn lipid máu (E78.5)",
+          "allergy_on_prescription": "Không ghi nhận",
+          "items": [
+            {
+              "name": "Levothyroxine 25 mcg",
+              "dosage_instruction": "1 viên buổi sáng trước ăn 30 phút",
+              "route": "Uống",
+              "quantity": "02 viên",
+              "duration": "2 ngày",
+              "stop_date": null,
+              "note": ""
+            }
+          ],
+          "doctor_note": ""
+        }
+      ]
+    },
+    {
+      "visit_date": "2026-08-15",
+      "visit_code": "KCB20260815003",
+      "specialty": "Nội cơ xương khớp",
+      "clinic": "PK Nội cơ xương khớp",
+      "chief_complaint": "Đau thắt lưng",
+      "vitals": {
+        "pulse": 69,
+        "temperature": 36.6,
+        "blood_pressure": "120/74",
+        "spo2": "97",
+        "respiratory_rate": "20",
+        "height_cm": 170.2,
+        "weight_kg": "75.3",
+        "bmi": "26"
+      },
+      "history": {
+        "past_medical_history": "Rối loạn lipid máu; Viêm tuyến giáp tự miễn; Đau lưng cơ học tái diễn, không chấn thương",
+        "family_history": "Chưa ghi nhận đặc biệt",
+        "allergy": "Không ghi nhận",
+        "medical_history": "Bệnh nhân có tiền sử đau lưng cơ học tái diễn, không chấn thương. Khoảng 24 ngày gần đây có đau thắt lưng, nay đến khám. Chưa ghi nhận dấu hiệu nặng kèm theo.",
+        "medication_status": true,
+        "current_medications": [
+          {
+            "name": "Vitamin C 1g",
+            "dosage": "1 viên/ngày, dùng 2 ngày (tổng số 02 viên)",
+            "route": "Uống",
+            "last_dose_date": null
+          },
+          {
+            "name": "Vitamin A 2000000 đơn vị / lần",
+            "dosage": "dùng 1 lần trong 1 ngày (tổng số 01 lần)",
+            "route": "Uống",
+            "last_dose_date": null
+          }
+        ],
+        "obstetric_history": "không có thông tin",
+        "menstrual_history": "không có thông tin"
+      },
+      "examination": {
+        "general_examination": "Tỉnh táo, tiếp xúc tốt\n- Thể trạng trung bình\n- Da niêm mạc hồng\n- Không phù ngoại vi",
+        "specialty_examination": "Co cứng cơ cạnh sống nhẹ, Lasègue âm tính, không yếu liệt, cơ tròn bình thường.",
+        "cardiovascular_respiratory_examination": "Mỏm tim vị trí bình thường, T1 T2 rõ. Phổi thông khí tốt hai bên.",
+        "other_systems_examination": "Bụng mềm, không đau; không phù chi",
+        "nutrition_assessment": "không có thông tin",
+        "vaccination_assessment": "không có thông tin",
+        "motor_development": "không có thông tin",
+        "mental_development": "không có thông tin"
+      },
+      "labs": {
+        "paraclinical_result": "X-quang cột sống thắt lưng: thoái hóa nhẹ, không tổn thương cấp",
+        "abnormal_result": ""
+      },
+      "diagnosis": {
+        "diagnosis_from_referring_facility": "",
+        "diagnosis_primary": [
+          {
+            "code": "M54.5",
+            "name": "Đau cột sống thắt lưng",
+            "description": null
+          }
+        ],
+        "diagnosis_comorbidities": [
+          {
+            "code": "E06.3",
+            "name": "Viêm tuyến giáp tự miễn",
+            "description": null
+          }
+        ],
+        "diagnosis_text": "Đau cột sống thắt lưng (M54.5); Viêm tuyến giáp tự miễn (E06.3)"
+      },
+      "plan": {
+        "prescription": "Paracetamol 500 mg, uống 1 viên tại viện.",
+        "doctor_advice": "Tránh mang vác nặng, duy trì vận động; khám ngay nếu yếu chân/rối loạn cơ tròn",
+        "treatment_plan": "Kê đơn.\nTư vấn vận động phù hợp và theo dõi triệu chứng.",
+        "followup_date": null
+      },
+      "prescriptions": [
+        {
+          "prescription_code": "DT20260815003",
+          "prescribed_date": "2026-08-15",
+          "prescriber": "BS. Nguyễn Văn Phúc",
+          "specialty": "Nội cơ xương khớp",
+          "diagnosis_on_prescription": "Đau cột sống thắt lưng (M54.5); Viêm tuyến giáp tự miễn (E06.3)",
+          "allergy_on_prescription": "Không ghi nhận",
+          "items": [
+            {
+              "name": "Paracetamol 500 mg",
+              "dosage_instruction": "1 viên khi đau hoặc sốt, tối đa 3 viên/ngày",
+              "route": "Uống",
+              "quantity": "09 viên",
+              "duration": "tối đa 3 ngày",
+              "stop_date": null,
+              "note": ""
+            }
+          ],
+          "doctor_note": ""
+        }
+      ]
+    }
+  ]
+}

@@ -8,19 +8,45 @@ from ai_synthesizer import (
     generate_timeline_clinical_details
 )
 
+from datetime import datetime
+
+def parse_date(date_str):
+    if not date_str:
+        return datetime.min
+    if 'T' in date_str:
+        date_str = date_str.split('T')[0]
+    for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
+        try:
+            return datetime.strptime(date_str, fmt)
+        except ValueError:
+            pass
+    return datetime.min
+
+def format_sentence(text):
+    text = text.strip()
+    if not text:
+        return text
+    return text[0].upper() + text[1:]
+
 def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
     visits = input_data.get("visits", [])
     if not visits:
         return {"error": "No visits found"}
 
+    # Sort visits by visit_date descending using parsed dates to ensure visits[0] is the latest
+    visits.sort(key=lambda x: parse_date(x.get("visit_date", "")), reverse=True)
+    
     # Determine latest visit
-    # Assuming visits are sorted or we take the first one
     latest_visit = visits[0] 
     
     # Extract basic info
     visit_count = len(visits)
     latest_visit_date = latest_visit.get("visit_date", "")
-    specialties = list(set([v.get("specialty", "") for v in visits if v.get("specialty")]))
+    specialties = []
+    for v in visits:
+        spec = v.get("specialty")
+        if spec and spec not in specialties:
+            specialties.append(spec)
 
     # AI fields for summary
     one_liner = generate_one_liner(latest_visit)
@@ -29,32 +55,29 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
     # Section 1: Tiền sử nền
     history = latest_visit.get("history", {})
     
-    # Items (past_medical_history)
-    pmh = history.get("past_medical_history", "")
-    items = []
-    if pmh:
-        items.append({
-            "content": pmh.strip(),
-            "since": ""
-        })
-    family_history_raw = history.get("family_history", "")
+    # Items (past_medical_history) - Trường AI render nên để trống content và since
+    items = [{"content": "", "since": ""}]
+    
     family_history = []
-    if family_history_raw:
-        def is_garbage(text):
-            t = text.strip().lower()
-            if not t or t in ["không", "null", "none"]:
+    def is_garbage(text):
+        t = text.strip().lower()
+        if not t or t in ["không", "null", "none"]:
+            return True
+        for p in ["chưa ghi nhận", "không ghi nhận", "không có", "bình thường"]:
+            if p in t:
                 return True
-            for p in ["chưa ghi nhận", "không ghi nhận", "không có", "bình thường"]:
-                if p in t:
-                    return True
-            return False
-            
-        if not is_garbage(family_history_raw):
-            for part in family_history_raw.split(";"):
+        return False
+        
+    for v in visits:
+        v_hist = v.get("history", {})
+        fh_raw = v_hist.get("family_history", "")
+        if fh_raw and not is_garbage(fh_raw):
+            for part in fh_raw.split(";"):
                 if not is_garbage(part):
                     part = part.strip()
                     part = part[0].upper() + part[1:]
-                    family_history.append(part)
+                    if part not in family_history:
+                        family_history.append(part)
 
     def filter_placeholder(val):
         if not val:
@@ -89,7 +112,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
                 "prescribedDate": p.get("prescribed_date") or "",
                 "prescriptionCode": p.get("prescription_code", ""),
                 "specialty": p.get("specialty", ""),
-                "durationEndDate": item.get("stop_date") or ""
+                "durationEndDate": item.get("stop_date") or None
             })
     
     current_meds = history.get("current_medications", [])
@@ -131,9 +154,9 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         treatment.append(plan_data.get("prescription"))
 
     advice_raw = plan_data.get("doctor_advice", "")
-    advice = [a.strip() for a in advice_raw.split(";")] if advice_raw else []
+    advice = [format_sentence(a) for a in advice_raw.split(";") if a.strip()] if advice_raw else []
     if plan_data.get("treatment_plan"):
-        advice.append(plan_data.get("treatment_plan"))
+        advice.append(format_sentence(plan_data.get("treatment_plan")))
 
     abnormal_results = []
     abnormal_raw = latest_visit.get("labs", {}).get("abnormal_result", "")
@@ -225,7 +248,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
     }
 
     # Section 4: Việc cần theo dõi tiếp
-    follow_up_items = [a.strip() for a in advice_raw.split(";")] if advice_raw else []
+    follow_up_items = [format_sentence(a) for a in advice_raw.split(";") if a.strip()] if advice_raw else []
     follow_up = []
     if plan_data.get("followup_date"):
         follow_up.append({
@@ -256,9 +279,9 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         v_treatment = []
         if v_plan.get("treatment_plan"):
             v_treatment.append(v_plan.get("treatment_plan"))
-        v_advice = [a.strip() for a in v_plan.get("doctor_advice", "").split(";")] if v_plan.get("doctor_advice") else []
+        v_advice = [format_sentence(a) for a in v_plan.get("doctor_advice", "").split(";") if a.strip()] if v_plan.get("doctor_advice") else []
         if v_plan.get("treatment_plan"):
-            v_advice.append(v_plan.get("treatment_plan"))
+            v_advice.append(format_sentence(v_plan.get("treatment_plan")))
 
         v_presc = []
         for p in v.get("prescriptions", []):
