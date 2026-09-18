@@ -41,13 +41,21 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
     family_history_raw = history.get("family_history", "")
     family_history = [family_history_raw] if family_history_raw else []
 
+    def filter_placeholder(val):
+        if not val:
+            return ""
+        v = val.strip().lower()
+        if v in ["không có thông tin", "chưa ghi nhận", "không", "null", "none", "không có"]:
+            return ""
+        return val
+
     section_1 = {
         "order": 1,
         "title": "Tiền sử nền",
         "items": items,
         "familyHistory": family_history,
-        "obstetricHistory": history.get("obstetric_history", ""),
-        "menstrualHistory": history.get("menstrual_history", "")
+        "obstetricHistory": filter_placeholder(history.get("obstetric_history", "")),
+        "menstrualHistory": filter_placeholder(history.get("menstrual_history", ""))
     }
 
     prescriptions_in = latest_visit.get("prescriptions", [])
