@@ -37,9 +37,24 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
             "content": pmh.strip(),
             "since": ""
         })
-    
     family_history_raw = history.get("family_history", "")
-    family_history = [family_history_raw] if family_history_raw else []
+    family_history = []
+    if family_history_raw:
+        def is_garbage(text):
+            t = text.strip().lower()
+            if not t or t in ["không", "null", "none"]:
+                return True
+            for p in ["chưa ghi nhận", "không ghi nhận", "không có", "bình thường"]:
+                if p in t:
+                    return True
+            return False
+            
+        if not is_garbage(family_history_raw):
+            for part in family_history_raw.split(";"):
+                if not is_garbage(part):
+                    part = part.strip()
+                    part = part[0].upper() + part[1:]
+                    family_history.append(part)
 
     def filter_placeholder(val):
         if not val:
@@ -71,10 +86,10 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
                 "dosage": dosage_val,
                 "frequency": item.get("dosage_instruction", ""),
                 "quantity": item.get("quantity", ""),
-                "prescribedDate": p.get("prescribed_date", ""),
+                "prescribedDate": p.get("prescribed_date") or "",
                 "prescriptionCode": p.get("prescription_code", ""),
                 "specialty": p.get("specialty", ""),
-                "durationEndDate": item.get("stop_date", "")
+                "durationEndDate": item.get("stop_date") or ""
             })
     
     current_meds = history.get("current_medications", [])
@@ -154,7 +169,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
                     "abnormal": is_abnormal
                 })
             else:
-                # Tự động tách chữ và số. Hỗ trợ tên xét nghiệm có chứa số (như FT4, Interleukin 6)
+              
                 match = re.match(r'^(.*)\s+([<>=]*\s*[+-]?\d+.*)$', part.strip())
                 if match:
                     abnormal_results.append({
@@ -168,7 +183,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
                         "result": "",
                         "abnormal": is_abnormal
                     })
-        # Map tĩnh thủ công một số trường theo mẫu
+       
         if "Test HP âm tính" in latest_visit.get("labs", {}).get("paraclinical_result", ""):
             abnormal_results.append({
                 "name": "Test HP",
