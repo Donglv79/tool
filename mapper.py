@@ -33,14 +33,10 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
     pmh = history.get("past_medical_history", "")
     items = []
     if pmh:
-        parts = pmh.split(";")
-        for part in parts:
-            part = part.strip()
-            if part:
-                items.append({
-                    "content": part,
-                    "since": ""
-                })
+        items.append({
+            "content": pmh.strip(),
+            "since": ""
+        })
     
     family_history_raw = history.get("family_history", "")
     family_history = [family_history_raw] if family_history_raw else []

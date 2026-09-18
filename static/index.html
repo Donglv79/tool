@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VinUni - Medical Data Mapper</title>
-    <link rel="stylesheet" href="styles.css?v=2">
+    <link rel="stylesheet" href="styles.css?v=5">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -73,6 +73,10 @@
                         <span class="btn-text">Copy Kết Quả</span>
                         <i class="fa-solid fa-copy"></i>
                     </button>
+                    <button id="details-btn" class="secondary-btn" style="display: none;">
+                        <span class="btn-text">Chi Tiết</span>
+                        <i class="fa-solid fa-list"></i>
+                    </button>
                 </div>
             </div>
 
@@ -83,6 +87,15 @@
         </main>
     </div>
 
-    <script src="script.js"></script>
+    <!-- Modal Chi tiết -->
+    <div id="details-modal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 95%; width: 1400px;">
+            <span class="close-btn" id="close-modal-btn">&times;</span>
+            <h2 style="margin-bottom: 1.5rem; color: var(--primary); text-align: center;">Bảng theo dõi Mapping (Output ⬅️ Input)</h2>
+            <div id="details-content" style="overflow-x: auto;"></div>
+        </div>
+    </div>
+
+    <script src="script.js?v=5"></script>
 </body>
 </html>

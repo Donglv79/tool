@@ -21,6 +21,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const jsonOutputText = document.getElementById('json-output-text');
     const processJsonBtn = document.getElementById('process-json-btn');
     const copyJsonBtn = document.getElementById('copy-json-btn');
+    const detailsBtn = document.getElementById('details-btn');
+    const detailsModal = document.getElementById('details-modal');
+    const closeModalBtn = document.getElementById('close-modal-btn');
+    const detailsContent = document.getElementById('details-content');
 
     // Status Elements
     const statusBox = document.getElementById('status-box');
@@ -210,6 +214,7 @@ document.addEventListener('DOMContentLoaded', () => {
         processJsonBtn.disabled = true;
         jsonOutputText.value = '';
         copyJsonBtn.style.display = 'none';
+        if (detailsBtn) detailsBtn.style.display = 'none';
 
         try {
             const response = await fetch('/api/process-raw-json', {
@@ -231,6 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showStatus('Xử lý JSON thành công!');
             loader.style.display = 'none';
             copyJsonBtn.style.display = 'flex';
+            if (detailsBtn) detailsBtn.style.display = 'flex';
         } catch (error) {
             showStatus(error.message, true);
         } finally {
@@ -252,6 +258,125 @@ document.addEventListener('DOMContentLoaded', () => {
                 .catch(err => {
                     console.error('Lỗi khi copy: ', err);
                 });
+        }
+    });
+
+    // Helper function to flatten JSON
+    function flattenJSON(data) {
+        let result = {};
+        function recurse(cur, prop) {
+            if (Object(cur) !== cur) {
+                result[prop] = cur;
+            } else if (Array.isArray(cur)) {
+                for (let i = 0; i < cur.length; i++) {
+                    recurse(cur[i], prop + "[" + i + "]");
+                }
+                if (cur.length === 0) result[prop] = [];
+            } else {
+                let isEmpty = true;
+                for (let p in cur) {
+                    isEmpty = false;
+                    recurse(cur[p], prop ? prop + "." + p : p);
+                }
+                if (isEmpty && prop) result[prop] = {};
+            }
+        }
+        recurse(data, "");
+        return result;
+    }
+
+    // Show Details Modal
+    if (detailsBtn) {
+        detailsBtn.addEventListener('click', () => {
+            if (!jsonOutputText.value) return;
+            try {
+                const outData = JSON.parse(jsonOutputText.value);
+                const flatOut = flattenJSON(outData);
+                
+                let inData = {};
+                try {
+                    inData = JSON.parse(jsonInputText.value);
+                } catch (e) {
+                    console.warn("Input JSON không hợp lệ");
+                }
+                const flatIn = flattenJSON(inData);
+                
+                // Xây dựng map giá trị Input để dò ngược
+                let inValueMap = {};
+                for (let k in flatIn) {
+                    let v = flatIn[k];
+                    if (v !== "" && v !== null && v !== undefined) {
+                        if (!inValueMap[v]) inValueMap[v] = [];
+                        inValueMap[v].push(k);
+                    }
+                }
+                
+                let html = '<table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.95rem;">';
+                html += '<tr style="border-bottom: 2px solid var(--primary);"><th style="padding: 12px; width: 30%;">Trường Output (Kết quả)</th><th style="padding: 12px; width: 35%;">Trường Input Tương Ứng (Nguồn gốc)</th><th style="padding: 12px; width: 35%;">Giá trị</th></tr>';
+                
+                let hasData = false;
+                for (let key in flatOut) {
+                    let val = flatOut[key];
+                    if (val !== "" && val !== null && val !== undefined && 
+                        !(Array.isArray(val) && val.length === 0) && 
+                        !(typeof val === 'object' && Object.keys(val).length === 0)) {
+                        
+                        hasData = true;
+                        let sourceHtml = '<span style="color: #64748B; font-style: italic;">[Được tổng hợp / tự động sinh]</span>';
+                        
+                        // Kiểm tra nếu là các trường cấu trúc cứng của file Output
+                        if (key.endsWith('.order') || key.endsWith('.title') || key === 'order' || key === 'title') {
+                            sourceHtml = '<span style="color: #8B5CF6; font-style: italic;">[Trường cấu trúc cố định]</span>';
+                        }
+                        // Tìm kiếm xem giá trị output này có khớp hoàn toàn với một trường input nào không
+                        else if (inValueMap[val]) {
+                            sourceHtml = inValueMap[val].map(k => `<span style="color: var(--secondary); font-weight: 600;">${k}</span>`).join('<br>');
+                        } else if (typeof val === 'string') {
+                            // Nếu không khớp hoàn toàn, thử xem nó có phải là một phần được cắt ra từ chuỗi input không (tìm chuỗi dài > 3 ký tự)
+                            let partials = [];
+                            if (val.length > 3) {
+                                for (let k in flatIn) {
+                                    if (typeof flatIn[k] === 'string' && flatIn[k].includes(val)) {
+                                        partials.push(k);
+                                    }
+                                }
+                            }
+                            if (partials.length > 0) {
+                                sourceHtml = partials.map(k => `<span style="color: #F59E0B; font-weight: 500;">${k} <br><small>(Cắt một phần)</small></span>`).join('<br><br>');
+                            }
+                        }
+                        
+                        html += `<tr style="border-bottom: 1px dashed var(--border-color);">
+                            <td style="padding: 12px; font-weight: 600; color: var(--primary); word-break: break-word;">${key}</td>
+                            <td style="padding: 12px; font-size: 0.9em; word-break: break-word;">${sourceHtml}</td>
+                            <td style="padding: 12px; word-break: break-word; color: var(--text-main);">${val}</td>
+                        </tr>`;
+                    }
+                }
+                html += '</table>';
+                
+                if (!hasData) html = '<p style="text-align: center; padding: 20px;">Không có dữ liệu.</p>';
+                
+                const detailsContent = document.getElementById('details-content');
+                if (detailsContent) detailsContent.innerHTML = html;
+                
+                detailsModal.style.display = 'flex';
+            } catch (e) {
+                console.error("Lỗi khi đọc JSON:", e);
+                showStatus("Lỗi khi xem chi tiết", true);
+            }
+        });
+    }
+
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener('click', () => {
+            detailsModal.style.display = 'none';
+        });
+    }
+
+    window.addEventListener('click', (e) => {
+        if (e.target === detailsModal) {
+            detailsModal.style.display = 'none';
         }
     });
 });
