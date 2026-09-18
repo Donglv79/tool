@@ -99,7 +99,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
             "name": m.get("name", ""),
             "dosage": m.get("dosage", ""),
             "route": m.get("route", ""),
-            "askedDate": None
+            "askedDate": latest_visit.get("visit_date", "")
         })
 
     section_2 = {
