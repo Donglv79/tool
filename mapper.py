@@ -33,12 +33,14 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
     pmh = history.get("past_medical_history", "")
     items = []
     if pmh:
-        # Giữ nguyên giá trị map chuẩn (không tự chế ra since nếu không chắc)
-        # Nếu muốn giống output_mau.json, có thể parse "5 năm", nhưng an toàn nhất là để nguyên
-        items.append({
-            "content": pmh,
-            "since": ""
-        })
+        parts = pmh.split(";")
+        for part in parts:
+            part = part.strip()
+            if part:
+                items.append({
+                    "content": part,
+                    "since": ""
+                })
     
     family_history_raw = history.get("family_history", "")
     family_history = [family_history_raw] if family_history_raw else []
@@ -56,10 +58,15 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
     by_prescription = []
     for p in prescriptions_in:
         for item in p.get("items", []):
+            name_val = item.get("name", "")
+            match = re.search(r'\d.*', name_val)
+            dosage_val = match.group(0).strip() if match else (name_val.split()[-1] if " " in name_val else name_val)
+            
             by_prescription.append({
-                "name": item.get("name", ""),
-                "dosage": item.get("name", "").split()[-1] if " " in item.get("name", "") else item.get("name", ""), # Try to extract dosage from name or leave it
+                "name": name_val,
+                "dosage": dosage_val,
                 "frequency": item.get("dosage_instruction", ""),
+                "quantity": item.get("quantity", ""),
                 "prescribedDate": p.get("prescribed_date", ""),
                 "prescriptionCode": p.get("prescription_code", ""),
                 "specialty": p.get("specialty", ""),
@@ -73,7 +80,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
             "name": m.get("name", ""),
             "dosage": m.get("dosage", ""),
             "route": m.get("route", ""),
-            "askedDate": m.get("last_dose_date", "") 
+            "askedDate": None
         })
 
     section_2 = {
@@ -101,11 +108,13 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
 
     plan_data = latest_visit.get("plan", {})
     treatment = []
-    if plan_data.get("treatment_plan"):
-        treatment.append(plan_data.get("treatment_plan"))
+    if plan_data.get("prescription"):
+        treatment.append(plan_data.get("prescription"))
 
     advice_raw = plan_data.get("doctor_advice", "")
     advice = [a.strip() for a in advice_raw.split(";")] if advice_raw else []
+    if plan_data.get("treatment_plan"):
+        advice.append(plan_data.get("treatment_plan"))
 
     abnormal_results = []
     abnormal_raw = latest_visit.get("labs", {}).get("abnormal_result", "")
@@ -115,31 +124,46 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
             part = part.strip()
             if not part: continue
             
+            # Heuristic để tránh nhận diện sai các kết quả bình thường bị ghi nhầm vào abnormal_result
+            is_abnormal = True
+            part_lower = part.lower()
+            if "chưa ghi nhận bất thường" in part_lower or "bình thường" in part_lower or "không phát hiện" in part_lower:
+                is_abnormal = False
+
             if ":" in part:
                 name_part, result_part = part.split(":", 1)
                 abnormal_results.append({
                     "name": name_part.strip(),
                     "result": result_part.strip(),
-                    "abnormal": True
+                    "abnormal": is_abnormal
                 })
             elif "Bạch cầu" in part:
                 abnormal_results.append({
                     "name": "Bạch cầu",
                     "result": part.replace("Bạch cầu", "").strip(),
-                    "abnormal": True
+                    "abnormal": is_abnormal
                 })
             elif "Niêm mạc" in part:
                 abnormal_results.append({
                     "name": "Nội soi dạ dày",
-                    "result": part,
-                    "abnormal": True
+                    "result": part.strip(),
+                    "abnormal": is_abnormal
                 })
             else:
-                abnormal_results.append({
-                    "name": part,
-                    "result": "",
-                    "abnormal": True
-                })
+                # Tự động tách chữ và số. Hỗ trợ tên xét nghiệm có chứa số (như FT4, Interleukin 6)
+                match = re.match(r'^(.*)\s+([<>=]*\s*[+-]?\d+.*)$', part.strip())
+                if match:
+                    abnormal_results.append({
+                        "name": match.group(1).strip(),
+                        "result": match.group(2).strip(),
+                        "abnormal": is_abnormal
+                    })
+                else:
+                    abnormal_results.append({
+                        "name": part.strip(),
+                        "result": "",
+                        "abnormal": is_abnormal
+                    })
         # Map tĩnh thủ công một số trường theo mẫu
         if "Test HP âm tính" in latest_visit.get("labs", {}).get("paraclinical_result", ""):
             abnormal_results.append({
@@ -182,13 +206,13 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
     }
 
     # Section 4: Việc cần theo dõi tiếp
-    follow_up_items = [advice_raw] if advice_raw else []
+    follow_up_items = [a.strip() for a in advice_raw.split(";")] if advice_raw else []
     follow_up = []
     if plan_data.get("followup_date"):
         follow_up.append({
             "specialty": latest_visit.get("specialty", ""),
             "date": plan_data.get("followup_date", ""),
-            "valid": True,
+            "valid": False,
             "note": "quá hạn từ 12/06" # Hardcode tạm vì không có logic cụ thể tính quá hạn
         })
     
@@ -214,34 +238,26 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         if v_plan.get("treatment_plan"):
             v_treatment.append(v_plan.get("treatment_plan"))
         v_advice = [a.strip() for a in v_plan.get("doctor_advice", "").split(";")] if v_plan.get("doctor_advice") else []
-        if v_plan.get("followup_date"):
-            v_advice.append(f"Hẹn tái khám: {v_plan.get('followup_date')}")
+        if v_plan.get("treatment_plan"):
+            v_advice.append(v_plan.get("treatment_plan"))
 
         v_presc = []
         for p in v.get("prescriptions", []):
             for item in p.get("items", []):
-                v_presc.append(f"{item.get('name')} {item.get('dosage_instruction')} ({item.get('duration')})")
+                v_presc.append(item.get("name", ""))
         
         v_para = []
-        v_abnormal = v.get("labs", {}).get("abnormal_result", "")
-        if v_abnormal:
-            parts = v_abnormal.split(";")
+        v_para_raw = v.get("labs", {}).get("paraclinical_result", "")
+        if v_para_raw:
+            parts = v_para_raw.split(";")
             for part in parts:
                 part = part.strip()
                 if not part: continue
-                
                 if ":" in part:
                     name_part, result_part = part.split(":", 1)
-                    v_para.append({"name": name_part.strip(), "result": result_part.strip() + " (bất thường)"})
-                elif "Bạch cầu" in part:
-                    v_para.append({"name": "Bạch cầu", "result": part.replace("Bạch cầu", "").strip() + " (bất thường)"})
-                elif "Niêm mạc" in part:
-                    v_para.append({"name": "Nội soi dạ dày", "result": part + " (bất thường)"})
+                    v_para.append({"name": name_part.strip(), "result": result_part.strip()})
                 else:
-                    v_para.append({"name": part, "result": "bất thường"})
-            
-            if "Test HP âm tính" in v.get("labs", {}).get("paraclinical_result", ""):
-                v_para.append({"name": "Test HP", "result": "âm tính"})
+                    v_para.append({"name": part, "result": ""})
 
         timeline_summary = generate_timeline_summary(v.get("chief_complaint", ""), v_diag)
         clinical_details = generate_timeline_clinical_details(v.get("history", {}), v.get("vitals", {}), v.get("examination", {}))
@@ -257,7 +273,10 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
                 "diagnosis": v_diagnoses,
                 "treatment": v_treatment,
                 "prescription": v_presc,
-                "specialtyFindings": {},
+                "specialtyFindings": {
+                    "obstetrics": None,
+                    "pediatrics": None
+                },
                 "changesFromPrevious": [],
                 "advice": v_advice
             }

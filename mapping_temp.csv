@@ -1,0 +1,50 @@
+OUTPUT FIELD,INPUT FIELD,CÁCH MAP
+summary.visitCount,visits[],Map theo dữ liệu input (đếm visit)
+summary.latestVisitDate,visits[].visit_date,Map đúng field; nếu input không có thì không tự đoán
+summary.specialties[],visits[].specialty,Map đúng field
+summary.oneLiner,Nhiều field liên quan trong visits,AI tự tổng hợp theo schema/spec
+summary.alerts[],Các field cảnh báo nếu schema quy định,AI/rule tổng hợp; không tự lấy ngoài input
+sections[].order,Không có,Theo schema cố định
+sections[].title,Không có,Theo schema cố định
+sections[].items[].content,history.past_medical_history,Map đúng field; có thể tách danh sách
+sections[].items[].since,Không có field tương ứng,Chỉ điền nếu input có nguồn chuẩn
+sections[].familyHistory[],history.family_history,Map đúng field /Tính theo rule từ đúng field
+sections[].obstetricHistory,history.obstetric_history,Map đúng field /Tính theo rule từ đúng field
+sections[].menstrualHistory,history.menstrual_history,Map đúng field /Tính theo rule từ đúng field
+sections[].byPrescription[].name,prescriptions[].items[].name,Map đúng field
+sections[].byPrescription[].dosage,prescriptions[].items[].dosage_instruction / name,Map theo field nguồn đã quy định
+sections[].byPrescription[].frequency,prescriptions[].items[].dosage_instruction,Map/tách từ đúng field
+sections[].byPrescription[].quantity,prescriptions[].items[].quantity,Map đúng field
+sections[].byPrescription[].prescribedDate,prescriptions[].prescribed_date,Map đúng field
+sections[].byPrescription[].prescriptionCode,prescriptions[].prescription_code,Map đúng field
+sections[].byPrescription[].specialty,prescriptions[].specialty,Map đúng field
+sections[].byPrescription[].durationEndDate,prescriptions[].prescribed_date + items[].duration,Tính theo rule từ đúng field
+sections[].selfReported[].name,history.current_medications[].name,Map đúng field
+sections[].selfReported[].dosage,history.current_medications[].dosage,Map đúng field
+sections[].selfReported[].route,history.current_medications[].route,Map đúng field
+sections[].selfReported[].askedDate,Không có field tương ứng,Chưa xác định
+latestBySpecialty[].visitDate,visits[].visit_date,Map đúng field
+latestBySpecialty[].specialty,visits[].specialty,Map đúng field
+latestBySpecialty[].vitalSigns.*,visits[].vitals.*,Map từng field tương ứng
+latestBySpecialty[].clinicalFindings,examination.*,AI/rule tổng hợp từ đúng các field khám
+latestBySpecialty[].specialtyFindings,examination.* chuyên khoa,Map/tổng hợp theo field nguồn
+latestBySpecialty[].abnormalResults[],labs.paraclinical_result / labs.abnormal_result,Map/parse đúng field
+latestBySpecialty[].diagnoses[],diagnosis.diagnosis_primary[] + diagnosis.diagnosis_comorbidities[],Map + gộp đúng 2 field
+latestBySpecialty[].treatment[],plan.prescription,Map đúng field
+latestBySpecialty[].advice[],plan.doctor_advice + plan.treatment_plan,Map/tách từ đúng field
+latestBySpecialty[].trends[],Không có field tương ứng,Chỉ tạo khi input có dữ liệu nguồn
+followUpItems[],plan.doctor_advice ,Map + gộp đúng 2 field
+followUp[],plan.followup_date,Map đúng field
+timeline[].visitDate,visits[].visit_date,Map đúng field
+timeline[].specialty,visits[].specialty,Map đúng field
+timeline[].visitCode,visits[].visit_code,Map đúng field
+timeline[].summary,chief_complaint + diagnosis.*,AI tự tổng hợp từ đúng field input
+timeline[].details.clinical,history.medical_history + vitals.* + examination.*,AI/rule tổng hợp từ đúng field
+timeline[].details.paraclinical[],labs.paraclinical_result,Map/parse đúng field
+timeline[].details.diagnosis[],diagnosis.diagnosis_primary[] + diagnosis.diagnosis_comorbidities[],Map + gộp đúng field
+timeline[].details.treatment[],plan.treatment_plan,Map đúng field
+timeline[].details.prescription[],prescriptions[].items[].name,Map + gộp danh sách
+timeline[].details.specialtyFindings,examination.* chuyên khoa,Map/tổng hợp theo field nguồn
+timeline[].details.changesFromPrevious[],Các visit trước (nếu input có),So sánh bằng dữ liệu input; không đoán
+timeline[].details.advice[],plan.doctor_advice + plan.treatment_plan,Map/tách đúng field
+errors,Không phải field dữ liệu bệnh nhân,Hệ thống tự sinh

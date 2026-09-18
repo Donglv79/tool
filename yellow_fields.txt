@@ -1,0 +1,15 @@
+Row 5: summary.oneLiner | Nhiều field liên quan trong visits | summary.oneLiner | Color: FFFFFF00
+Row 5: summary.oneLiner | Nhiều field liên quan trong visits | Nhiều field liên quan trong visits | Color: FFFFFF00
+Row 5: summary.oneLiner | Nhiều field liên quan trong visits | AI tự tổng hợp theo schema/spec | Color: FFFFFF00
+Row 6: summary.alerts[] | Các field cảnh báo nếu schema quy định | summary.alerts[] | Color: FFFFFF00
+Row 6: summary.alerts[] | Các field cảnh báo nếu schema quy định | Các field cảnh báo nếu schema quy định | Color: FFFFFF00
+Row 6: summary.alerts[] | Các field cảnh báo nếu schema quy định | AI/rule tổng hợp; không tự lấy ngoài input | Color: FFFFFF00
+Row 29: latestBySpecialty[].clinicalFindings | examination.* | latestBySpecialty[].clinicalFindings | Color: FFFFFF00
+Row 29: latestBySpecialty[].clinicalFindings | examination.* | examination.* | Color: FFFFFF00
+Row 29: latestBySpecialty[].clinicalFindings | examination.* | AI/rule tổng hợp từ đúng các field khám | Color: FFFFFF00
+Row 41: timeline[].summary | chief_complaint + diagnosis.* | timeline[].summary | Color: FFFFFF00
+Row 41: timeline[].summary | chief_complaint + diagnosis.* | chief_complaint + diagnosis.* | Color: FFFFFF00
+Row 41: timeline[].summary | chief_complaint + diagnosis.* | AI tự tổng hợp từ đúng field input | Color: FFFFFF00
+Row 42: timeline[].details.clinical | history.medical_history + vitals.* + examination.* | timeline[].details.clinical | Color: FFFFFF00
+Row 42: timeline[].details.clinical | history.medical_history + vitals.* + examination.* | history.medical_history + vitals.* + examination.* | Color: FFFFFF00
+Row 42: timeline[].details.clinical | history.medical_history + vitals.* + examination.* | AI/rule tổng hợp từ đúng field | Color: FFFFFF00
