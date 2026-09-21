@@ -115,7 +115,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
     # Section 1
     items = [{
         "content": "dt: str, len: >0",
-        "since": "dt: str, len: >0"
+        "since": "dt: str (MM/YYYY), len: >0"
     }]
     
     family_history = []
