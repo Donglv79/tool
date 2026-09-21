@@ -103,17 +103,14 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         return False
         
     history = latest_visit.get("history", {})
-    has_allergy = bool(history.get("allergy", "") and not is_garbage(history.get("allergy", "")))
-    alerts = []
-    if has_allergy:
-        alerts.append({
-            "type": "Allergy",
-            "title": "Dị ứng",
-            "description": "dt: str", # AI: Yes
-            "identifiedDate": "",
-            "conflict": False,
-            "scopeNote": "dt: str" # AI: Không chắc chắn
-        })
+    alerts = [{
+        "type": "dt: str",
+        "title": "dt: str",
+        "description": "dt: str",
+        "identifiedDate": "dt: str",
+        "conflict": "dt: bool",
+        "scopeNote": "dt: str"
+    }]
 
     # Section 1
     items = [{
