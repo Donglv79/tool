@@ -116,7 +116,10 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         })
 
     # Section 1
-    items = "dt: list, len: >=1" 
+    items = [{
+        "content": "dt: str",
+        "since": "dt: str"
+    }]
     
     family_history = []
     for v in visits:
@@ -148,50 +151,16 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
     all_prescriptions.sort(key=lambda x: parse_date(x.get("prescribed_date", "")), reverse=True)
     latest_prescription = all_prescriptions[0] if all_prescriptions else None
 
-    now = datetime.now()
-    by_prescription = []
-    
-    for p in all_prescriptions:
-        is_latest = (p == latest_prescription)
-        items_to_add = []
-        has_valid = False
-        
-        for item in p.get("items", []):
-            instruction = str(item.get("dosage_instruction", ""))
-            dosage_val = ""
-            frequency_val = ""
-            # dosage và frequency chỉ tách khi dosageInstruction đủ rõ; không tách được thì dùng chuỗi rỗng
-            if "lần" in instruction.lower() or "viên" in instruction.lower():
-                frequency_val = instruction
-            else:
-                frequency_val = ""
-                
-            end_date_str = calculate_duration_end_date(p.get("prescribed_date", ""), item.get("duration", ""))
-            
-            is_valid = False
-            if end_date_str:
-                end_date_obj = parse_date(end_date_str)
-                if end_date_obj != datetime.min and end_date_obj >= now:
-                    is_valid = True
-                    has_valid = True
-            
-            if is_latest or is_valid:
-                p_date_raw = p.get("prescribed_date", "")
-                p_date_fmt = p_date_raw[:10] if p_date_raw else ""
-                
-                items_to_add.append({
-                    "name": "dt: str", 
-                    "dosage": "dt: str",
-                    "frequency": "dt: str",
-                    "quantity": "dt: str",
-                    "prescribedDate": "dt: str",
-                    "prescriptionCode": "dt: str",
-                    "specialty": "dt: str",
-                    "durationEndDate": "dt: str"
-                })
-                
-        if items_to_add:
-            by_prescription.extend(items_to_add)
+    by_prescription = [{
+        "name": "dt: str", 
+        "dosage": "dt: str",
+        "frequency": "dt: str",
+        "quantity": "dt: str",
+        "prescribedDate": "dt: str",
+        "prescriptionCode": "dt: str",
+        "specialty": "dt: str",
+        "durationEndDate": "dt: str"
+    }]
     
     current_meds = history.get("current_medications", [])
     self_reported = []
@@ -211,6 +180,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
     }
 
     # Section 3
+    now = datetime.now()
     selected_visits = [latest_visit]
     for v in visits:
         if v in selected_visits:
@@ -287,7 +257,13 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
             "diagnoses": diagnoses_sel,
             "treatment": treatment_sel,
             "advice": advice_sel,
-            "trends": "dt: list" 
+            "trends": [{
+                "name": "dt: str",
+                "from": "dt: str",
+                "fromDate": "dt: str",
+                "to": "dt: str",
+                "toDate": "dt: str"
+            }]
         })
 
     section_3 = {
@@ -339,10 +315,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
             v_treatment.append(v_plan.get("treatment_plan"))
         v_advice = [format_sentence(a) for a in v_plan.get("doctor_advice", "").split(";") if a.strip()] if v_plan.get("doctor_advice") else []
 
-        v_presc = []
-        for p in v.get("prescriptions", []):
-            for item in p.get("items", []):
-                v_presc.append("dt: str") 
+        v_presc = ["dt: str"]
         
         v_para = [{"name": "dt: str", "result": "dt: str"}]
 
