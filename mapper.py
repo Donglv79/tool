@@ -91,7 +91,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
             specialties.append(spec)
 
     # 1. oneLiner (AI: Yes)
-    one_liner = "dt: str" 
+    one_liner = "dt: str, len: >0" 
     
     def is_garbage(text):
         t = str(text).strip().lower()
@@ -104,18 +104,18 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         
     history = latest_visit.get("history", {})
     alerts = [{
-        "type": "dt: str",
-        "title": "dt: str",
-        "description": "dt: str",
-        "identifiedDate": "dt: str",
+        "type": "dt: str, len: >0",
+        "title": "dt: str, len: >0",
+        "description": "dt: str, len: >0",
+        "identifiedDate": "dt: str, len: >0",
         "conflict": "dt: bool",
-        "scopeNote": "dt: str"
+        "scopeNote": "dt: str, len: >0"
     }]
 
     # Section 1
     items = [{
-        "content": "dt: str",
-        "since": "dt: str"
+        "content": "dt: str, len: >0",
+        "since": "dt: str, len: >0"
     }]
     
     family_history = []
@@ -135,8 +135,8 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         "title": "Tiền sử nền",
         "items": items,
         "familyHistory": family_history,
-        "obstetricHistory": "dt: str", 
-        "menstrualHistory": "dt: str"  
+        "obstetricHistory": "dt: str, len: >0", 
+        "menstrualHistory": "dt: str, len: >0"  
     }
 
     # Section 2
@@ -149,14 +149,14 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
     latest_prescription = all_prescriptions[0] if all_prescriptions else None
 
     by_prescription = [{
-        "name": "dt: str", 
-        "dosage": "dt: str",
-        "frequency": "dt: str",
-        "quantity": "dt: str",
-        "prescribedDate": "dt: str",
-        "prescriptionCode": "dt: str",
-        "specialty": "dt: str",
-        "durationEndDate": "dt: str"
+        "name": "dt: str, len: >0", 
+        "dosage": "dt: str, len: >0",
+        "frequency": "dt: str, len: >0",
+        "quantity": "dt: str, len: >0",
+        "prescribedDate": "dt: str (YYYY-MM-DD), len: >0",
+        "prescriptionCode": "dt: str, len: >0",
+        "specialty": "dt: str, len: >0",
+        "durationEndDate": "dt: str (YYYY-MM-DD), len: >0"
     }]
     
     current_meds = history.get("current_medications", [])
@@ -205,27 +205,22 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
             diagnoses_sel.append({
                 "code": d.get("code", ""),
                 "name": d.get("name", ""),
-                "description": "dt: str"
+                "description": "dt: str, len: >0"
             })
         for d in v_diag_sel.get("diagnosis_comorbidities", []):
             diagnoses_sel.append({
                 "code": d.get("code", ""),
                 "name": d.get("name", ""),
-                "description": "dt: str"
+                "description": "dt: str, len: >0"
             })
         diagnoses_sel = deduplicate_diagnoses(diagnoses_sel)
 
-        v_plan_sel = v_sel.get("plan", {})
-        treatment_sel = []
-        if v_plan_sel.get("treatment_plan"):
-            treatment_sel.append(v_plan_sel.get("treatment_plan"))
-
-        advice_raw_sel = v_plan_sel.get("doctor_advice", "")
-        advice_sel = [format_sentence(a) for a in advice_raw_sel.split(";") if a.strip()] if advice_raw_sel else []
+        treatment_sel = ["dt: str, len: >0"]
+        advice_sel = ["dt: str, len: >0"]
 
         abnormal_results_sel = [{
-            "name": "dt: str", 
-            "result": "dt: str",
+            "name": "dt: str, len: >0", 
+            "result": "dt: str, len: >0",
             "abnormal": "dt: bool"
         }]
 
@@ -245,9 +240,9 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
                 "height": float(v_sel.get("vitals", {}).get("height_cm", "0") or 0),
                 "bmi": float(v_sel.get("vitals", {}).get("bmi", "0") or 0)
             },
-            "clinicalFindings": "dt: str",
+            "clinicalFindings": "dt: str, len: >0",
             "specialtyFindings": {
-                "obstetrics": None, 
+                "obstetrics": "dt: str, len: >0", 
                 "pediatrics": None
             },
             "abnormalResults": abnormal_results_sel,
@@ -255,11 +250,11 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
             "treatment": treatment_sel,
             "advice": advice_sel,
             "trends": [{
-                "name": "dt: str",
-                "from": "dt: str",
-                "fromDate": "dt: str",
-                "to": "dt: str",
-                "toDate": "dt: str"
+                "name": "dt: str, len: >0",
+                "from": "dt: str, len: >0",
+                "fromDate": "dt: str (YYYY-MM-DD), len: >0",
+                "to": "dt: str, len: >0",
+                "toDate": "dt: str (YYYY-MM-DD), len: >0"
             }]
         })
 
@@ -301,34 +296,52 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         v_diag = v.get("diagnosis", {})
         v_diagnoses = []
         for d in v_diag.get("diagnosis_primary", []):
-            v_diagnoses.append({"code": d.get("code", ""), "name": d.get("name", ""), "description": "dt: str"}) 
+            v_diagnoses.append({"code": d.get("code", ""), "name": d.get("name", ""), "description": "dt: str, len: >0"}) 
         for d in v_diag.get("diagnosis_comorbidities", []):
-            v_diagnoses.append({"code": d.get("code", ""), "name": d.get("name", ""), "description": "dt: str"}) 
+            v_diagnoses.append({"code": d.get("code", ""), "name": d.get("name", ""), "description": "dt: str, len: >0"}) 
         v_diagnoses = deduplicate_diagnoses(v_diagnoses)
         
         v_plan = v.get("plan", {})
         v_treatment = []
         if v_plan.get("treatment_plan"):
             v_treatment.append(v_plan.get("treatment_plan"))
-        v_advice = [format_sentence(a) for a in v_plan.get("doctor_advice", "").split(";") if a.strip()] if v_plan.get("doctor_advice") else []
+            
+        v_advice_list = []
+        if v_plan.get("doctor_advice"):
+            v_advice_list.extend(a.strip() for a in v_plan.get("doctor_advice", "").split(";") if a.strip())
+        if v_plan.get("treatment_plan"):
+            v_advice_list.extend(a.strip() for a in v_plan.get("treatment_plan", "").split(";") if a.strip())
+        if v_plan.get("followup_date"):
+            v_advice_list.append(str(v_plan.get("followup_date")))
+        for p in v.get("prescriptions", []):
+            if p.get("doctor_note"):
+                v_advice_list.extend(a.strip() for a in str(p.get("doctor_note")).split(";") if a.strip())
+                
+        # Deduplicate while preserving order
+        seen_advice = set()
+        v_advice = []
+        for a in v_advice_list:
+            if a not in seen_advice:
+                seen_advice.add(a)
+                v_advice.append(format_sentence(a))
 
-        v_presc = ["dt: str"]
+        v_presc = ["dt: str, len: >0"]
         
-        v_para = [{"name": "dt: str", "result": "dt: str"}]
+        v_para = [{"name": "dt: str, len: >0", "result": "dt: str, len: >0"}]
 
         timeline.append({
             "visitDate": v.get("visit_date", ""),
             "specialty": v.get("specialty", ""),
             "visitCode": v.get("visit_code", ""),
-            "summary": "dt: str",
+            "summary": "dt: str, len: >0",
             "details": {
-                "clinical": "dt: str",
+                "clinical": "dt: str, len: >0",
                 "paraclinical": v_para,
                 "diagnosis": v_diagnoses,
                 "treatment": v_treatment,
                 "prescription": v_presc,
                 "specialtyFindings": {
-                    "obstetrics": None, 
+                    "obstetrics": "dt: str, len: >0", 
                     "pediatrics": None
                 },
                 "changesFromPrevious": [],
