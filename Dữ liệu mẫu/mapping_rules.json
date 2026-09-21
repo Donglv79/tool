@@ -1,0 +1,247 @@
+[
+  {
+    "OUTPUT FIELD": "summary.visitCount",
+    "INPUT FIELD": "visits[]",
+    "CÁCH MAP": "Map theo dữ liệu input (đếm visit)"
+  },
+  {
+    "OUTPUT FIELD": "summary.latestVisitDate",
+    "INPUT FIELD": "visits[].visit_date",
+    "CÁCH MAP": "Map đúng field; nếu input không có thì không tự đoán"
+  },
+  {
+    "OUTPUT FIELD": "summary.specialties[]",
+    "INPUT FIELD": "visits[].specialty",
+    "CÁCH MAP": "Map đúng field"
+  },
+  {
+    "OUTPUT FIELD": "summary.oneLiner",
+    "INPUT FIELD": "Nhiều field liên quan trong visits",
+    "CÁCH MAP": "AI tự tổng hợp theo schema/spec"
+  },
+  {
+    "OUTPUT FIELD": "summary.alerts[]",
+    "INPUT FIELD": "Các field cảnh báo nếu schema quy định",
+    "CÁCH MAP": "AI/rule tổng hợp; không tự lấy ngoài input"
+  },
+  {
+    "OUTPUT FIELD": "sections[].order",
+    "INPUT FIELD": "Không có",
+    "CÁCH MAP": "Theo schema cố định"
+  },
+  {
+    "OUTPUT FIELD": "sections[].title",
+    "INPUT FIELD": "Không có",
+    "CÁCH MAP": "Theo schema cố định"
+  },
+  {
+    "OUTPUT FIELD": "sections[].items[].content",
+    "INPUT FIELD": "history.past_medical_history",
+    "CÁCH MAP": "Map đúng field; có thể tách danh sách"
+  },
+  {
+    "OUTPUT FIELD": "sections[].items[].since",
+    "INPUT FIELD": "Không có field tương ứng",
+    "CÁCH MAP": "Chỉ điền nếu input có nguồn chuẩn"
+  },
+  {
+    "OUTPUT FIELD": "sections[].familyHistory[]",
+    "INPUT FIELD": "history.family_history",
+    "CÁCH MAP": "Map đúng field /Tính theo rule từ đúng field"
+  },
+  {
+    "OUTPUT FIELD": "sections[].obstetricHistory",
+    "INPUT FIELD": "history.obstetric_history",
+    "CÁCH MAP": "Map đúng field /Tính theo rule từ đúng field"
+  },
+  {
+    "OUTPUT FIELD": "sections[].menstrualHistory",
+    "INPUT FIELD": "history.menstrual_history",
+    "CÁCH MAP": "Map đúng field /Tính theo rule từ đúng field"
+  },
+  {
+    "OUTPUT FIELD": "sections[].byPrescription[].name",
+    "INPUT FIELD": "prescriptions[].items[].name",
+    "CÁCH MAP": "Map đúng field"
+  },
+  {
+    "OUTPUT FIELD": "sections[].byPrescription[].dosage",
+    "INPUT FIELD": "prescriptions[].items[].dosage_instruction / name",
+    "CÁCH MAP": "Map theo field nguồn đã quy định"
+  },
+  {
+    "OUTPUT FIELD": "sections[].byPrescription[].frequency",
+    "INPUT FIELD": "prescriptions[].items[].dosage_instruction",
+    "CÁCH MAP": "Map/tách từ đúng field"
+  },
+  {
+    "OUTPUT FIELD": "sections[].byPrescription[].quantity",
+    "INPUT FIELD": "prescriptions[].items[].quantity",
+    "CÁCH MAP": "Map đúng field"
+  },
+  {
+    "OUTPUT FIELD": "sections[].byPrescription[].prescribedDate",
+    "INPUT FIELD": "prescriptions[].prescribed_date",
+    "CÁCH MAP": "Map đúng field"
+  },
+  {
+    "OUTPUT FIELD": "sections[].byPrescription[].prescriptionCode",
+    "INPUT FIELD": "prescriptions[].prescription_code",
+    "CÁCH MAP": "Map đúng field"
+  },
+  {
+    "OUTPUT FIELD": "sections[].byPrescription[].specialty",
+    "INPUT FIELD": "prescriptions[].specialty",
+    "CÁCH MAP": "Map đúng field"
+  },
+  {
+    "OUTPUT FIELD": "sections[].byPrescription[].durationEndDate",
+    "INPUT FIELD": "prescriptions[].prescribed_date + items[].duration",
+    "CÁCH MAP": "Tính theo rule từ đúng field"
+  },
+  {
+    "OUTPUT FIELD": "sections[].selfReported[].name",
+    "INPUT FIELD": "history.current_medications[].name",
+    "CÁCH MAP": "Map đúng field"
+  },
+  {
+    "OUTPUT FIELD": "sections[].selfReported[].dosage",
+    "INPUT FIELD": "history.current_medications[].dosage",
+    "CÁCH MAP": "Map đúng field"
+  },
+  {
+    "OUTPUT FIELD": "sections[].selfReported[].route",
+    "INPUT FIELD": "history.current_medications[].route",
+    "CÁCH MAP": "Map đúng field"
+  },
+  {
+    "OUTPUT FIELD": "sections[].selfRefported[].askedDate",
+    "INPUT FIELD": "Không có field tương ứng",
+    "CÁCH MAP": "Chưa xác định"
+  },
+  {
+    "OUTPUT FIELD": "latestBySpecialty[].visitDate",
+    "INPUT FIELD": "visits[].visit_date",
+    "CÁCH MAP": "Map đúng field"
+  },
+  {
+    "OUTPUT FIELD": "latestBySpecialty[].specialty",
+    "INPUT FIELD": "visits[].specialty",
+    "CÁCH MAP": "Map đúng field"
+  },
+  {
+    "OUTPUT FIELD": "latestBySpecialty[].vitalSigns.*",
+    "INPUT FIELD": "visits[].vitals.*",
+    "CÁCH MAP": "Map từng field tương ứng"
+  },
+  {
+    "OUTPUT FIELD": "latestBySpecialty[].clinicalFindings",
+    "INPUT FIELD": "examination.*",
+    "CÁCH MAP": "AI/rule tổng hợp từ đúng các field khám"
+  },
+  {
+    "OUTPUT FIELD": "latestBySpecialty[].specialtyFindings",
+    "INPUT FIELD": "examination.* chuyên khoa",
+    "CÁCH MAP": "Map/tổng hợp theo field nguồn"
+  },
+  {
+    "OUTPUT FIELD": "latestBySpecialty[].abnormalResults[]",
+    "INPUT FIELD": "labs.paraclinical_result / labs.abnormal_result",
+    "CÁCH MAP": "Map/parse đúng field"
+  },
+  {
+    "OUTPUT FIELD": "latestBySpecialty[].diagnoses[]",
+    "INPUT FIELD": "diagnosis.diagnosis_primary[] + diagnosis.diagnosis_comorbidities[]",
+    "CÁCH MAP": "Map + gộp đúng 2 field"
+  },
+  {
+    "OUTPUT FIELD": "latestBySpecialty[].treatment[]",
+    "INPUT FIELD": "plan.prescription",
+    "CÁCH MAP": "Map đúng field"
+  },
+  {
+    "OUTPUT FIELD": "latestBySpecialty[].advice[]",
+    "INPUT FIELD": "plan.doctor_advice + plan.treatment_plan",
+    "CÁCH MAP": "Map/tách từ đúng field"
+  },
+  {
+    "OUTPUT FIELD": "latestBySpecialty[].trends[]",
+    "INPUT FIELD": "Không có field tương ứng",
+    "CÁCH MAP": "Chỉ tạo khi input có dữ liệu nguồn"
+  },
+  {
+    "OUTPUT FIELD": "followUpItems[]",
+    "INPUT FIELD": "plan.doctor_advice ",
+    "CÁCH MAP": "Map + gộp đúng 2 field"
+  },
+  {
+    "OUTPUT FIELD": "followUp[]",
+    "INPUT FIELD": "plan.followup_date",
+    "CÁCH MAP": "Map đúng field"
+  },
+  {
+    "OUTPUT FIELD": "timeline[].visitDate",
+    "INPUT FIELD": "visits[].visit_date",
+    "CÁCH MAP": "Map đúng field"
+  },
+  {
+    "OUTPUT FIELD": "timeline[].specialty",
+    "INPUT FIELD": "visits[].specialty",
+    "CÁCH MAP": "Map đúng field"
+  },
+  {
+    "OUTPUT FIELD": "timeline[].visitCode",
+    "INPUT FIELD": "visits[].visit_code",
+    "CÁCH MAP": "Map đúng field"
+  },
+  {
+    "OUTPUT FIELD": "timeline[].summary",
+    "INPUT FIELD": "chief_complaint + diagnosis.*",
+    "CÁCH MAP": "AI tự tổng hợp từ đúng field input"
+  },
+  {
+    "OUTPUT FIELD": "timeline[].details.clinical",
+    "INPUT FIELD": "history.medical_history + vitals.* + examination.*",
+    "CÁCH MAP": "AI/rule tổng hợp từ đúng field"
+  },
+  {
+    "OUTPUT FIELD": "timeline[].details.paraclinical[]",
+    "INPUT FIELD": "labs.paraclinical_result",
+    "CÁCH MAP": "Map/parse đúng field"
+  },
+  {
+    "OUTPUT FIELD": "timeline[].details.diagnosis[]",
+    "INPUT FIELD": "diagnosis.diagnosis_primary[] + diagnosis.diagnosis_comorbidities[]",
+    "CÁCH MAP": "Map + gộp đúng field"
+  },
+  {
+    "OUTPUT FIELD": "timeline[].details.treatment[]",
+    "INPUT FIELD": "plan.treatment_plan",
+    "CÁCH MAP": "Map đúng field"
+  },
+  {
+    "OUTPUT FIELD": "timeline[].details.prescription[]",
+    "INPUT FIELD": "prescriptions[].items[].name",
+    "CÁCH MAP": "Map + gộp danh sách"
+  },
+  {
+    "OUTPUT FIELD": "timeline[].details.specialtyFindings",
+    "INPUT FIELD": "examination.* chuyên khoa",
+    "CÁCH MAP": "Map/tổng hợp theo field nguồn"
+  },
+  {
+    "OUTPUT FIELD": "timeline[].details.changesFromPrevious[]",
+    "INPUT FIELD": "Các visit trước (nếu input có)",
+    "CÁCH MAP": "So sánh bằng dữ liệu input; không đoán"
+  },
+  {
+    "OUTPUT FIELD": "timeline[].details.advice[]",
+    "INPUT FIELD": "plan.doctor_advice + plan.treatment_plan",
+    "CÁCH MAP": "Map/tách đúng field"
+  },
+  {
+    "OUTPUT FIELD": "errors",
+    "INPUT FIELD": "Không phải field dữ liệu bệnh nhân",
+    "CÁCH MAP": "Hệ thống tự sinh"
+  }
+]

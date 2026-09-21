@@ -257,8 +257,6 @@ def main():
         advice = []
         if plan.get('doctor_advice'):
             advice.extend([format_sentence(a) for a in plan.get('doctor_advice').split(";") if a.strip()])
-        if plan.get('treatment_plan'):
-            advice.append(format_sentence(plan.get('treatment_plan')))
             
         timeline.append({
             "visitDate": v.get('visit_date', ''),

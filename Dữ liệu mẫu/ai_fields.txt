@@ -1,0 +1,21 @@
+- data.summary.oneLiner: Yes
+- data.summary.alerts[].description: Yes
+- data.summary.alerts[].scopeNote: Không chắc chắn
+- data.summary.sections[order=1].items[].content: Yes
+- data.summary.sections[order=1].obstetricHistory: Yes
+- data.summary.sections[order=1].menstrualHistory: Yes
+- data.summary.sections[order=2].byPrescription[].name: Yes
+- data.summary.sections[order=3].latestBySpecialty[]: Không chắc
+- data.summary.sections[order=3].latestBySpecialty[].clinicalFindings: Yes
+- data.summary.sections[order=3].latestBySpecialty[].specialtyFindings.obstetrics: Không chắc
+- data.summary.sections[order=3].latestBySpecialty[].abnormalResults[].name: Không chắc
+- data.summary.sections[order=3].latestBySpecialty[].abnormalResults[].result: Không chắc
+- data.summary.sections[order=3].latestBySpecialty[].diagnoses[].description: Yes
+- data.summary.sections[order=3].latestBySpecialty[].trends[]: Không chắc
+- data.summary.sections[order=3].latestBySpecialty[].trends[].name: Không chắc
+- data.timeline[].summary: Yes
+- data.timeline[].details.clinical: Yes
+- data.timeline[].details.paraclinical[].name: Yes
+- data.timeline[].details.paraclinical[].result: Yes
+- data.timeline[].details.prescription[]: Yes
+- data.timeline[].details.specialtyFindings.obstetrics: Yes

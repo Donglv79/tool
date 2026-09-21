@@ -1,12 +1,8 @@
 import pandas as pd
 import json
 
-xl = pd.ExcelFile('cong thuc mapping.xlsx')
-data = ''
-for sheet in xl.sheet_names:
-    df = pd.read_excel(xl, sheet_name=sheet)
-    data += f'# Sheet: {sheet}\n'
-    data += df.to_markdown(index=False) + '\n\n'
-
-with open('excel_content.md', 'w', encoding='utf-8') as f:
-    f.write(data)
+df = pd.read_excel('c:/Users/NapoleDong/Documents/Vinuni/Thực tập/tool/Dữ liệu mẫu/cong thuc mapping.xlsx')
+# drop NaNs and convert to dict
+data = df.fillna("").to_dict(orient="records")
+with open('c:/Users/NapoleDong/Documents/Vinuni/Thực tập/tool/Dữ liệu mẫu/mapping_rules.json', 'w', encoding='utf-8') as f:
+    json.dump(data, f, ensure_ascii=False, indent=2)
