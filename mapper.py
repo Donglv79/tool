@@ -31,36 +31,38 @@ def deduplicate_diagnoses(diags):
         code = code.strip()
         name = d.get("name") or ""
         name = name.strip().lower()
+        desc = d.get("description")
         
         is_duplicate = False
         for u in unique_diags:
             u_code = (u.get("code") or "").strip()
             u_name = (u.get("name") or "").strip().lower()
             
+            is_match = False
             if code and u_code and code == u_code:
-                is_duplicate = True
-                break
-                
-            if name and u_name:
+                is_match = True
+            elif name and u_name:
                 if name in u_name or u_name in name:
-                    is_duplicate = True
-                    break
-                
-                similarity = difflib.SequenceMatcher(None, name, u_name).ratio()
-                if similarity > 0.8:
-                    is_duplicate = True
-                    break
+                    is_match = True
+                elif difflib.SequenceMatcher(None, name, u_name).ratio() > 0.8:
+                    is_match = True
+                    
+            if is_match:
+                is_duplicate = True
+                if (u.get("description") is None or u.get("description") == "") and desc:
+                    u["description"] = desc
+                break
                     
         if not is_duplicate:
             unique_diags.append(d)
     return unique_diags
 
 def _compute_trends(current_visit, all_visits):
-    """So sánh chỉ số vital signs giữa lượt hiện tại và lượt trước cùng specialty (Non-AI, No.57-62)."""
+    """So sánh chỉ số giữa lượt hiện tại và lượt trước liền kề cùng specialty (Non-AI, No.57-62)."""
     specialty = current_visit.get("specialty", "")
     current_date = parse_date(current_visit.get("visit_date", ""))
     
-    # Tìm lượt trước cùng specialty
+    # Tìm lượt trước cùng specialty (lượt liền kề)
     prev_visit = None
     for v in all_visits:
         if v.get("specialty") == specialty and v is not current_visit:
@@ -68,7 +70,7 @@ def _compute_trends(current_visit, all_visits):
             if v_date < current_date and v_date != datetime.min:
                 if prev_visit is None or v_date > parse_date(prev_visit.get("visit_date", "")):
                     prev_visit = v
-    
+                    
     empty_trend = [{
         "name": "",
         "from": "",
@@ -81,6 +83,8 @@ def _compute_trends(current_visit, all_visits):
         return empty_trend
     
     trends = []
+    
+    # 1. Sinh hiệu
     vital_map = {
         "pulse": "Mạch (lần/phút)",
         "temperature": "Nhiệt độ (°C)",
@@ -114,7 +118,36 @@ def _compute_trends(current_visit, all_visits):
                 "to": cur_str,
                 "toDate": current_visit.get("visit_date", "")
             })
+            
+    # 2. Cận lâm sàng
+    cur_labs = current_visit.get("labs", {})
+    prev_labs = prev_visit.get("labs", {})
     
+    cur_para = cur_labs.get("paraclinical_result", [])
+    prev_para = prev_labs.get("paraclinical_result", [])
+    
+    if isinstance(cur_para, list) and isinstance(prev_para, list):
+        for cp in cur_para:
+            cp_name = (cp.get("name") or "").strip()
+            cp_res = (cp.get("result") or "").strip()
+            if not cp_name or not cp_res:
+                continue
+                
+            for pp in prev_para:
+                pp_name = (pp.get("name") or "").strip()
+                pp_res = (pp.get("result") or "").strip()
+                
+                if pp_name.lower() == cp_name.lower() and pp_res:
+                    if cp_res != pp_res:
+                        trends.append({
+                            "name": cp_name,
+                            "from": pp_res,
+                            "fromDate": prev_visit.get("visit_date", ""),
+                            "to": cp_res,
+                            "toDate": current_visit.get("visit_date", "")
+                        })
+                    break
+
     return trends if trends else empty_trend
 
 def _extract_dosage_frequency(instruction):
@@ -332,19 +365,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         diag_text = str(v_diag_sel.get("diagnosis_text", "")).strip()
         
         def _get_desc(d):
-            name_val = d.get("name", "")
-            code_val = d.get("code", "")
-            desc_val = d.get("description", "") or name_val
-            
-            if diag_text and code_val:
-                for part in diag_text.split(";"):
-                    part = part.strip()
-                    if code_val in part:
-                        # Nối desc_val (name) với phần diagnosis_text tương ứng chứa mã code
-                        if part.lower() != desc_val.lower():
-                            return f"{desc_val} {part}".strip()
-                        return part
-            return desc_val
+            return d.get("description")
 
         for d in v_diag_sel.get("diagnosis_primary", []):
             diagnoses_sel.append({
@@ -488,17 +509,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         diag_text = str(v_diag.get("diagnosis_text", "")).strip()
         
         def _get_timeline_desc(d):
-            name_val = d.get("name", "")
-            code_val = d.get("code", "")
-            desc_val = d.get("description", "") or name_val
-            if diag_text and code_val:
-                for part in diag_text.split(";"):
-                    part = part.strip()
-                    if code_val in part:
-                        if part.lower() != desc_val.lower():
-                            return f"{desc_val} {part}".strip()
-                        return part
-            return desc_val
+            return d.get("description")
 
         for d in v_diag.get("diagnosis_primary", []):
             v_diagnoses.append({
@@ -537,18 +548,16 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
                 route = pi.get("route", "")
                 quantity = pi.get("quantity", "")
                 note = pi.get("note", "")
-                parts = [med_name]
-                if dosage_instr:
-                    parts.append(dosage_instr)
-                if route:
-                    parts.append(route)
-                if quantity:
-                    parts.append(f"SL: {quantity}")
-                if dur:
-                    parts.append(f"({dur})")
-                if note:
-                    parts.append(f"[{note}]")
-                v_presc.append(", ".join(parts))
+                
+                parts = []
+                if med_name: parts.append(med_name)
+                if dosage_instr: parts.append(dosage_instr)
+                if route: parts.append(route)
+                if quantity: parts.append(f"SL: {quantity}")
+                if dur: parts.append(f"({dur})")
+                if note: parts.append(f"[{note}]")
+                
+                v_presc.append(" ".join(parts).strip())
 
         
         # paraclinical (AI: Yes, No.75-76)

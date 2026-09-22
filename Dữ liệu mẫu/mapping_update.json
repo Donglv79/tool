@@ -573,11 +573,11 @@
   },
   {
     "No.": 53,
-    "INPUT FIELD": "visits[].diagnosis.diagnosis_primary[].name; visits[].diagnosis.diagnosis_comorbidities[].name; visits[].diagnosis.diagnosis_text",
+    "INPUT FIELD": "visits[].diagnosis.diagnosis_primary[].description; visits[].diagnosis.diagnosis_comorbidities[].description",
     "Data type input": "string",
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].diagnoses[].description",
     "Data type output": "string",
-    "CÁCH MAP": "Dùng tên chẩn đoán nguồn làm mô tả; giữ phần diagnosis_text có ý nghĩa chưa được phản ánh, chỉ gắn vào đúng chẩn đoán khi truy vết được.",
+    "CÁCH MAP": "Lấy trực tiếp từ trường description của diagnosis_primary và diagnosis_comorbidities (hoặc name nếu không có description).",
     "Have AI": "Yes",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\ndiagnoses: lấy diagnosisPrimary và diagnosisComorbidities; trả code và description, khử trùng lặp theo cặp mã - tên.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R6\nChẩn đoán: khử trùng lặp theo mã ICD và tên; không tự diễn giải mã ICD. Nếu chẩn đoán văn bản của bác sĩ chứa thông tin mà mã ICD không phản ánh thì giữ nguyên phần văn bản.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n                  \"code\": \"E11\",\n                  \"description\": \"Đái tháo đường type 2\""
@@ -848,11 +848,11 @@
   },
   {
     "No.": 78,
-    "INPUT FIELD": "visits[].diagnosis.diagnosis_primary[].name; visits[].diagnosis.diagnosis_comorbidities[].name; visits[].diagnosis.diagnosis_text",
+    "INPUT FIELD": "visits[].diagnosis.diagnosis_primary[].description; visits[].diagnosis.diagnosis_comorbidities[].description",
     "Data type input": "string",
     "OUTPUT FIELD": "data.timeline[].details.diagnosis[].description",
     "Data type output": "string",
-    "CÁCH MAP": "Dùng tên chẩn đoán nguồn làm mô tả; giữ phần diagnosis_text có ý nghĩa chưa được phản ánh, chỉ gắn vào đúng chẩn đoán khi truy vết được.",
+    "CÁCH MAP": "Lấy trực tiếp từ trường description của diagnosis_primary và diagnosis_comorbidities (hoặc name nếu không có description).",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.7\nprescription, paraclinical, diagnosis, treatment, specialtyFindings và advice lấy từ đúng lượt; field không có dữ liệu dùng giá trị rỗng đúng contract.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R6\nChẩn đoán: khử trùng lặp theo mã ICD và tên; không tự diễn giải mã ICD. Nếu chẩn đoán văn bản của bác sĩ chứa thông tin mà mã ICD không phản ánh thì giữ nguyên phần văn bản.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n              \"code\": \"E11\",\n              \"description\": \"Đái tháo đường type 2\""
