@@ -16,26 +16,7 @@ def parse_date(date_str):
             pass
     return datetime.min
 
-def calculate_duration_end_date(prescribed_date_str, duration_str):
-    if not prescribed_date_str or not duration_str:
-        return ""
-    try:
-        p_date = parse_date(prescribed_date_str)
-        if p_date == datetime.min:
-            return ""
-        
-        match = re.search(r'(\d+)\s*(ngày|day)', str(duration_str).lower())
-        if match:
-            days = int(match.group(1))
-            end_date = p_date + timedelta(days=days)
-            return end_date.strftime("%Y-%m-%d")
-            
-        if str(duration_str).isdigit():
-            end_date = p_date + timedelta(days=int(duration_str))
-            return end_date.strftime("%Y-%m-%d")
-    except Exception:
-        pass
-    return ""
+
 
 def format_sentence(text):
     text = text.strip()
@@ -74,6 +55,112 @@ def deduplicate_diagnoses(diags):
             unique_diags.append(d)
     return unique_diags
 
+def _compute_trends(current_visit, all_visits):
+    """So sánh chỉ số vital signs giữa lượt hiện tại và lượt trước cùng specialty (Non-AI, No.57-62)."""
+    specialty = current_visit.get("specialty", "")
+    current_date = parse_date(current_visit.get("visit_date", ""))
+    
+    # Tìm lượt trước cùng specialty
+    prev_visit = None
+    for v in all_visits:
+        if v.get("specialty") == specialty and v is not current_visit:
+            v_date = parse_date(v.get("visit_date", ""))
+            if v_date < current_date and v_date != datetime.min:
+                if prev_visit is None or v_date > parse_date(prev_visit.get("visit_date", "")):
+                    prev_visit = v
+    
+    empty_trend = [{
+        "name": "",
+        "from": "",
+        "fromDate": "",
+        "to": "",
+        "toDate": ""
+    }]
+    
+    if prev_visit is None:
+        return empty_trend
+    
+    trends = []
+    vital_map = {
+        "pulse": "Mạch (lần/phút)",
+        "temperature": "Nhiệt độ (°C)",
+        "blood_pressure": "Huyết áp (mmHg)",
+        "spo2": "SpO2 (%)",
+        "respiratory_rate": "Nhịp thở (lần/phút)",
+        "weight_kg": "Cân nặng (kg)",
+        "height_cm": "Chiều cao (cm)",
+        "bmi": "BMI"
+    }
+    
+    cur_vitals = current_visit.get("vitals", {})
+    prev_vitals = prev_visit.get("vitals", {})
+    
+    for key, label in vital_map.items():
+        cur_val = cur_vitals.get(key)
+        prev_val = prev_vitals.get(key)
+        
+        if cur_val is None or prev_val is None:
+            continue
+        cur_str = str(cur_val).strip()
+        prev_str = str(prev_val).strip()
+        if not cur_str or cur_str in ["0", "0.0", ""] or not prev_str or prev_str in ["0", "0.0", ""]:
+            continue
+        
+        if cur_str != prev_str:
+            trends.append({
+                "name": label,
+                "from": prev_str,
+                "fromDate": prev_visit.get("visit_date", ""),
+                "to": cur_str,
+                "toDate": current_visit.get("visit_date", "")
+            })
+    
+    return trends if trends else empty_trend
+
+def _extract_dosage_frequency(instruction):
+    """Tách tần suất/cách dùng từ dosage_instruction (No.22). Theo yêu cầu mới, không tách mà lấy toàn bộ chuỗi."""
+    if not instruction:
+        return ""
+    return instruction
+
+def _extract_dosage_from_name(name):
+    """Tách liều (hàm lượng) từ tên thuốc (No.21)."""
+    if not name:
+        return ""
+    match = re.search(r'(\d+(?:\.\d+)?\s*(?:mg|mcg|g|ml|đơn vị|IU|UI).*)$', name, re.IGNORECASE)
+    if match:
+        return match.group(1).strip()
+    return ""
+
+def _build_pediatrics(visit):
+    """Map pediatrics từ examination fields, chỉ dùng cho phiếu Nhi (Non-AI, No.45-48, 83-86)."""
+    def _is_garbage(text):
+        t = str(text).strip().lower()
+        if not t or t in ["không", "null", "none"]:
+            return True
+        for p in ["chưa ghi nhận", "không ghi nhận", "không có", "bình thường", "không có thông tin"]:
+            if p in t:
+                return True
+        return False
+
+    empty_pediatrics = {
+        "nutrition": "",
+        "vaccination": "",
+        "motorDevelopment": "",
+        "mentalDevelopment": ""
+    }
+
+    if "Nhi" not in visit.get("specialty", ""):
+        return empty_pediatrics
+    
+    exam = visit.get("examination", {})
+    return {
+        "nutrition": exam.get("nutrition_assessment", "") if not _is_garbage(exam.get("nutrition_assessment", "")) else "",
+        "vaccination": exam.get("vaccination_assessment", "") if not _is_garbage(exam.get("vaccination_assessment", "")) else "",
+        "motorDevelopment": exam.get("motor_development", "") if not _is_garbage(exam.get("motor_development", "")) else "",
+        "mentalDevelopment": exam.get("mental_development", "") if not _is_garbage(exam.get("mental_development", "")) else "",
+    }
+
 def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
     visits = input_data.get("visits", [])
     if not visits:
@@ -93,10 +180,6 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         if spec and spec not in specialties:
             specialties.append(spec)
 
-    # 1. oneLiner (AI: Yes)
-    # Thuật toán: AI tự đọc bệnh án và tóm tắt thành 1 câu ngắn gọn
-    one_liner = "dt: str, len: >0" 
-    
     def is_garbage(text):
         t = str(text).strip().lower()
         if not t or t in ["không", "null", "none"]:
@@ -107,11 +190,18 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         return False
         
     history = latest_visit.get("history", {})
+    now = datetime.now()
     
-    # 2. alerts (AI: Yes)
-    # Thuật toán: AI phân tích toàn bộ bệnh án để phát hiện cảnh báo nguy hiểm / xung đột thuốc
+    # ============================================================
+    # 1. oneLiner (AI: Yes, No.5)
+    # ============================================================
+    one_liner = "dt: str, len: >0"
+    
+    # ============================================================
+    # 2. alerts (AI: Yes, No.6-12 — toàn bộ object là AI)
+    # ============================================================
     alerts = [{
-        "type": "dt: str, len: >0",
+        "type": "warning",                        # Non-AI (No.7): hardcode "warning"
         "title": "dt: str, len: >0",
         "description": "dt: str, len: >0",
         "identifiedDate": "dt: str, len: >0",
@@ -119,42 +209,33 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         "scopeNote": "dt: str, len: >0"
     }]
 
+    # ============================================================
     # 3. Section 1: Tiền sử nền
-    # - items (AI: Yes)
+    # ============================================================
+    # items (AI: Yes, No.15-16)
     items = [{
         "content": "dt: str, len: >0",
         "since": "dt: str (MM/YYYY), len: >0"
     }]
     
-    # - familyHistory (Lấy từ: visits[].history.family_history)
-    # Thuật toán: Quét toàn bộ visits, cắt chuỗi bằng dấu `;`, loại bỏ từ khóa rác, viết hoa chữ cái đầu và lọc trùng.
-    family_history = []
-    for v in visits:
-        v_hist = v.get("history", {})
-        fh_raw = v_hist.get("family_history", "")
-        if fh_raw and not is_garbage(fh_raw):
-            for part in fh_raw.split(";"):
-                if not is_garbage(part):
-                    part = part.strip()
-                    part = part[0].upper() + part[1:]
-                    if part not in family_history:
-                        family_history.append(part)
+    # familyHistory (AI: Yes, No.17 — Dev confirm Y)
+    family_history = ["dt: str, len: >0"]
 
+    # obstetricHistory (AI: Yes, No.18 — Dev confirm Y)
+    # menstrualHistory (AI: Yes, No.19 — Dev confirm Y)
     section_1 = {
         "order": 1,
         "title": "Tiền sử nền",
         "items": items,
         "familyHistory": family_history,
-        "obstetricHistory": "dt: str, len: >0", # (AI: Yes) Tiền sử sản khoa
-        "menstrualHistory": "dt: str, len: >0"  # (AI: Yes) Tiền sử kinh nguyệt
+        "obstetricHistory": "dt: str, len: >0",
+        "menstrualHistory": "dt: str, len: >0"
     }
 
+    # ============================================================
     # 4. Section 2: Thuốc đang sử dụng
-    # A. byPrescription (Lấy từ: visits[].prescriptions)
-    # Thuật toán: 
-    # - Chọn TẤT CẢ thuốc của đợt khám có đơn thuốc gần nhất.
-    # - CỘNG THÊM các thuốc của đợt cũ nhưng vẫn còn hạn (durationEndDate >= now).
-    # - Sắp xếp: Ưu tiên còn hạn (is_active) xếp lên đầu, sau đó giảm dần theo prescribed_date.
+    # ============================================================
+    # A. byPrescription (Non-AI, No.20-27)
     all_prescriptions = []
     for v in visits:
         for p in v.get("prescriptions", []):
@@ -163,16 +244,13 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
     all_prescriptions.sort(key=lambda x: parse_date(x.get("prescribed_date", "")), reverse=True)
     latest_date_str = all_prescriptions[0].get("prescribed_date", "") if all_prescriptions else ""
 
-    now = datetime.now()
-    
     temp_items = []
     for p in all_prescriptions:
         prescribed_date = p.get("prescribed_date", "")
         is_latest = (prescribed_date == latest_date_str) and latest_date_str != ""
         
         for item in p.get("items", []):
-            duration = item.get("duration", "")
-            duration_end_date = calculate_duration_end_date(prescribed_date, duration)
+            duration_end_date = item.get("stop_date")
             
             is_active = False
             if duration_end_date:
@@ -182,16 +260,19 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
             
             if is_latest or is_active:
                 instruction = item.get("dosage_instruction", "")
+                name_val = item.get("name", "")
+                dosage_extracted = _extract_dosage_from_name(name_val)
+                frequency_extracted = _extract_dosage_frequency(instruction)
                 
                 mapped_item = {
-                    "name": "dt: str, len: >0", # (AI: Yes) Tự động chuẩn hóa tên thuốc
-                    "dosage": "dt: str, len: >0", # (AI: Yes) Tự động trích xuất liều lượng
-                    "frequency": instruction if instruction else "dt: str, len: >0", # Lấy trực tiếp từ dosage_instruction
-                    "quantity": item.get("quantity", "dt: str, len: >0"), # Lấy từ items[].quantity
-                    "prescribedDate": prescribed_date if prescribed_date else "dt: str (YYYY-MM-DD), len: >0",
-                    "prescriptionCode": p.get("prescription_code", "dt: str, len: >0"),
-                    "specialty": p.get("specialty", "dt: str, len: >0"),
-                    "durationEndDate": duration_end_date if duration_end_date else "dt: str (YYYY-MM-DD), len: >0" # Tính toán: prescribedDate + duration
+                    "name": name_val,                                   # Non-AI (No.20): out = in
+                    "dosage": dosage_extracted,                          # Non-AI (No.21): tách liều từ name
+                    "frequency": frequency_extracted,                    # Non-AI (No.22): tách frequency từ dosage_instruction
+                    "quantity": item.get("quantity", ""),                # Non-AI (No.23): out = in
+                    "prescribedDate": prescribed_date,                  # Non-AI (No.24): out = in
+                    "prescriptionCode": p.get("prescription_code", ""), # Non-AI (No.25): out = in
+                    "specialty": p.get("specialty", ""),                 # Non-AI (No.26): out = in
+                    "durationEndDate": duration_end_date                # Non-AI (No.27): tính toán
                 }
                 
                 temp_items.append({
@@ -203,8 +284,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
     temp_items.sort(key=lambda x: (x["is_active"], x["date_obj"]), reverse=True)
     by_prescription = [x["data"] for x in temp_items]
     
-    # B. selfReported (Lấy từ: visits[0].history.current_medications)
-    # Thuật toán: Map 1-1 các trường name, dosage, route từ dữ liệu của đợt khám gần nhất
+    # B. selfReported (Non-AI, No.28-31)
     current_meds = history.get("current_medications", [])
     self_reported = []
     for m in current_meds:
@@ -222,9 +302,10 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         "selfReported": self_reported
     }
 
+    # ============================================================
     # 5. Section 3: Tình trạng bệnh nhân (latestBySpecialty)
-    # Nguồn: Tất cả các lần khám (visits) có cùng ngày khám với latest_visit_date
-    # Thuật toán: Lọc và gom nhóm thông tin theo từng chuyên khoa khám trong ngày hôm đó
+    # ============================================================
+    # Lọc visits: lượt mới nhất + lượt có thuốc còn hạn (Non-AI, No.32)
     selected_visits = latest_visits[:]
     for v in visits:
         if v in selected_visits:
@@ -232,7 +313,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         has_valid_prescription = False
         for p in v.get("prescriptions", []):
             for item in p.get("items", []):
-                end_date_str = calculate_duration_end_date(p.get("prescribed_date", ""), item.get("duration", ""))
+                end_date_str = item.get("stop_date") or ""
                 if end_date_str:
                     end_date_obj = parse_date(end_date_str)
                     if end_date_obj != datetime.min and end_date_obj >= now:
@@ -248,32 +329,65 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
     for v_sel in selected_visits:
         v_diag_sel = v_sel.get("diagnosis", {})
         diagnoses_sel = []
+        diag_text = str(v_diag_sel.get("diagnosis_text", "")).strip()
+        
+        def _get_desc(d):
+            name_val = d.get("name", "")
+            code_val = d.get("code", "")
+            desc_val = d.get("description", "") or name_val
+            
+            if diag_text and code_val:
+                for part in diag_text.split(";"):
+                    part = part.strip()
+                    if code_val in part:
+                        # Nối desc_val (name) với phần diagnosis_text tương ứng chứa mã code
+                        if part.lower() != desc_val.lower():
+                            return f"{desc_val} {part}".strip()
+                        return part
+            return desc_val
+
         for d in v_diag_sel.get("diagnosis_primary", []):
             diagnoses_sel.append({
                 "code": d.get("code", ""),
                 "name": d.get("name", ""),
-                "description": "dt: str, len: >0"
+                "description": _get_desc(d)
             })
+            
         for d in v_diag_sel.get("diagnosis_comorbidities", []):
             diagnoses_sel.append({
                 "code": d.get("code", ""),
                 "name": d.get("name", ""),
-                "description": "dt: str, len: >0"
+                "description": _get_desc(d)
             })
         diagnoses_sel = deduplicate_diagnoses(diagnoses_sel)
 
-        # Các trường AI tự sinh: treatment, advice, abnormalResults, clinicalFindings
-        treatment_sel = ["dt: str, len: >0"] # (AI: Yes)
-        advice_sel = ["dt: str, len: >0"] # (AI: Yes)
+        # treatment (Non-AI, No.55): Tách hướng điều trị từ plan
+        v_plan_sel = v_sel.get("plan", {})
+        treatment_sel = []
+        if v_plan_sel.get("treatment_plan"):
+            for part in v_plan_sel.get("treatment_plan", "").split(";"):
+                part = part.strip()
+                if part and not is_garbage(part):
+                    treatment_sel.append(format_sentence(part))
 
-        abnormal_results_sel = [{ # (AI: Yes)
+        # advice (Non-AI, No.56): Tách lời dặn từ doctor_advice
+        advice_sel = []
+        if v_plan_sel.get("doctor_advice"):
+            for part in v_plan_sel.get("doctor_advice", "").split(";"):
+                part = part.strip()
+                if part and not is_garbage(part):
+                    advice_sel.append(format_sentence(part))
+
+        # abnormalResults (AI: Yes, No.49-51)
+        abnormal_results_sel = [{
             "name": "dt: str, len: >0", 
             "result": "dt: str, len: >0",
             "abnormal": "dt: bool"
         }]
 
-        # vitalSigns: Trích xuất và ép kiểu (convert_type) từ visits[].vitals
-        pulse = v_sel.get("vitals", {}).get("pulse", 0)
+        # vitalSigns (Non-AI, No.35-42)
+        vitals = v_sel.get("vitals", {})
+        pulse = vitals.get("pulse", 0)
         pulse = float(pulse) if str(pulse).replace('.','',1).isdigit() else 0
 
         latest_by_specialty.append({
@@ -281,30 +395,24 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
             "specialty": v_sel.get("specialty", ""),
             "vitalSigns": {
                 "pulse": pulse,
-                "temperature": float(v_sel.get("vitals", {}).get("temperature", "0") or 0),
-                "bloodPressure": str(v_sel.get("vitals", {}).get("blood_pressure", "")),
-                "spo2": int(v_sel.get("vitals", {}).get("spo2", "0") or 0),
-                "respiratoryRate": int(v_sel.get("vitals", {}).get("respiratory_rate", "0") or 0),
-                "weight": float(v_sel.get("vitals", {}).get("weight_kg", "0") or 0),
-                "height": float(v_sel.get("vitals", {}).get("height_cm", "0") or 0),
-                "bmi": float(v_sel.get("vitals", {}).get("bmi", "0") or 0)
+                "temperature": float(vitals.get("temperature", "0") or 0),
+                "bloodPressure": str(vitals.get("blood_pressure", "")),
+                "spo2": int(vitals.get("spo2", "0") or 0),
+                "respiratoryRate": int(vitals.get("respiratory_rate", "0") or 0),
+                "weight": float(vitals.get("weight_kg", "0") or 0),
+                "height": float(vitals.get("height_cm", "0") or 0),
+                "bmi": float(vitals.get("bmi", "0") or 0)
             },
-            "clinicalFindings": "dt: str, len: >0", # (AI: Yes)
+            "clinicalFindings": "dt: str, len: >0",                     # AI (No.43)
             "specialtyFindings": {
-                "obstetrics": "dt: str, len: >0", # (AI: Yes)
-                "pediatrics": None
+                "obstetrics": "dt: str, len: >0",                       # AI (No.44)
+                "pediatrics": _build_pediatrics(v_sel)                  # Non-AI (No.45-48) hoặc None
             },
-            "abnormalResults": abnormal_results_sel,
+            "abnormalResults": abnormal_results_sel,                     # AI (No.49-51)
             "diagnoses": diagnoses_sel,
             "treatment": treatment_sel,
             "advice": advice_sel,
-            "trends": [{
-                "name": "dt: str, len: >0",
-                "from": "dt: str, len: >0",
-                "fromDate": "dt: str (YYYY-MM-DD), len: >0",
-                "to": "dt: str, len: >0",
-                "toDate": "dt: str (YYYY-MM-DD), len: >0"
-            }]
+            "trends": _compute_trends(v_sel, visits)                    # Non-AI (No.57-62)
         })
 
     section_3 = {
@@ -313,98 +421,164 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         "latestBySpecialty": latest_by_specialty
     }
 
+    # ============================================================
     # 6. Section 4: Việc cần theo dõi tiếp
-    # Nguồn: visits[0].plan
-    # Thuật toán: Trích xuất doctor_advice (ghép thêm tên chuyên khoa) và followup_date của lần khám gần nhất
-    plan_data = latest_visit.get("plan", {})
-    follow_up_items = []
-    if plan_data.get("doctor_advice"):
-        advice_raw = plan_data.get("doctor_advice", "")
-        spec = latest_visit.get("specialty", "")
-        if spec:
-            follow_up_items.append(f"{spec}: {format_sentence(advice_raw)}")
-        else:
-            follow_up_items.append(format_sentence(advice_raw))
+    # ============================================================
+    # followUpItems (AI: Yes, No.63 — Dev confirm Y)
+    follow_up_items = ["dt: str, len: >0"]
     
+    # followUp (Non-AI, No.64-68)
     follow_up = []
-    if plan_data.get("followup_date"):
-        follow_up.append({
-            "specialty": latest_visit.get("specialty", ""),
-            "date": plan_data.get("followup_date", ""),
-            "note": "" 
-        })
+    for lv in selected_visits:
+        lv_plan = lv.get("plan", {})
+        if lv_plan.get("followup_date"):
+            fu_date_str = lv_plan.get("followup_date", "")
+            lv_visit_date_str = lv.get("visit_date", "")
+            
+            fu_date_obj = parse_date(fu_date_str)
+            lv_date_obj = parse_date(lv_visit_date_str)
+            
+            fu_valid = False
+            fu_note = ""
+            if fu_date_obj == datetime.min or lv_date_obj == datetime.min:
+                fu_valid = False
+                fu_note = "Không đủ dữ liệu xác định tính hợp lệ"
+            elif fu_date_obj > lv_date_obj:
+                fu_valid = True
+                if fu_date_obj < now:
+                    fu_note = "Quá hạn"
+            else:
+                fu_valid = False
+                fu_note = "Ngày hẹn không hợp lệ (trước hoặc bằng ngày khám)"
+            
+            # Khử trùng theo specialty + date
+            is_dup = False
+            for existing in follow_up:
+                if existing["specialty"] == lv.get("specialty", "") and existing["date"] == fu_date_str:
+                    is_dup = True
+                    break
+            if not is_dup:
+                follow_up.append({
+                    "specialty": lv.get("specialty", ""),
+                    "date": fu_date_str,
+                    "valid": fu_valid,
+                    "note": fu_note
+                })
     
     section_4 = {
         "order": 4,
         "title": "Việc cần theo dõi tiếp",
         "followUpItems": follow_up_items,
-        "followUp": follow_up
+        "followUp": follow_up if follow_up else [{
+            "specialty": "",
+            "date": "",
+            "valid": False,
+            "note": ""
+        }]
     }
 
+    # ============================================================
     # 7. Timeline (Lịch sử các lần khám)
-    # Thuật toán: Duyệt toàn bộ mảng visits, map 1-1 các trường cứng. 
-    # Gộp diagnoses và advice, loại bỏ trùng lặp.
-    # Các trường phức tạp (summary, clinical, paraclinical, prescription) chừa trống cho AI tóm tắt.
+    # ============================================================
     timeline = []
     for v in visits:
+        # diagnosis (Non-AI, No.77-79)
         v_diag = v.get("diagnosis", {})
         v_diagnoses = []
+        diag_text = str(v_diag.get("diagnosis_text", "")).strip()
+        
+        def _get_timeline_desc(d):
+            name_val = d.get("name", "")
+            code_val = d.get("code", "")
+            desc_val = d.get("description", "") or name_val
+            if diag_text and code_val:
+                for part in diag_text.split(";"):
+                    part = part.strip()
+                    if code_val in part:
+                        if part.lower() != desc_val.lower():
+                            return f"{desc_val} {part}".strip()
+                        return part
+            return desc_val
+
         for d in v_diag.get("diagnosis_primary", []):
-            v_diagnoses.append({"code": d.get("code", ""), "name": d.get("name", ""), "description": "dt: str, len: >0"}) 
+            v_diagnoses.append({
+                "code": d.get("code", ""),
+                "name": d.get("name", ""),
+                "description": _get_timeline_desc(d)
+            })
         for d in v_diag.get("diagnosis_comorbidities", []):
-            v_diagnoses.append({"code": d.get("code", ""), "name": d.get("name", ""), "description": "dt: str, len: >0"}) 
+            v_diagnoses.append({
+                "code": d.get("code", ""),
+                "name": d.get("name", ""),
+                "description": _get_timeline_desc(d)
+            })
         v_diagnoses = deduplicate_diagnoses(v_diagnoses)
         
         v_plan = v.get("plan", {})
+
+        # treatment (Non-AI, No.80): Tách hướng điều trị, bảo toàn ý nguồn
         v_treatment = []
         if v_plan.get("treatment_plan"):
-            v_treatment.append(v_plan.get("treatment_plan"))
-            
-        v_advice_list = []
-        if v_plan.get("doctor_advice"):
-            v_advice_list.extend(a.strip() for a in v_plan.get("doctor_advice", "").split(";") if a.strip())
-        if v_plan.get("treatment_plan"):
-            v_advice_list.extend(a.strip() for a in v_plan.get("treatment_plan", "").split(";") if a.strip())
-        if v_plan.get("followup_date"):
-            v_advice_list.append(str(v_plan.get("followup_date")))
-        for p in v.get("prescriptions", []):
-            if p.get("doctor_note"):
-                v_advice_list.extend(a.strip() for a in str(p.get("doctor_note")).split(";") if a.strip())
-                
-        # Deduplicate while preserving order
-        seen_advice = set()
-        v_advice = []
-        for a in v_advice_list:
-            if a not in seen_advice:
-                seen_advice.add(a)
-                v_advice.append(format_sentence(a))
+            for part in v_plan.get("treatment_plan", "").split(";"):
+                part = part.strip()
+                if part and not is_garbage(part):
+                    v_treatment.append(format_sentence(part))
 
-        v_presc = ["dt: str, len: >0"] # (AI: Yes)
+        # advice (AI: Yes, No.88 — Dev confirm Y)
+        v_advice = ["dt: str, len: >0"]
+
+        # prescription (Non-AI, No.81 — Dev confirm N): Tóm tắt đơn thuốc của chính lượt
+        v_presc = []
+        for p in v.get("prescriptions", []):
+            for pi in p.get("items", []):
+                med_name = pi.get("name", "")
+                dosage_instr = pi.get("dosage_instruction", "")
+                dur = pi.get("duration", "")
+                route = pi.get("route", "")
+                quantity = pi.get("quantity", "")
+                note = pi.get("note", "")
+                parts = [med_name]
+                if dosage_instr:
+                    parts.append(dosage_instr)
+                if route:
+                    parts.append(route)
+                if quantity:
+                    parts.append(f"SL: {quantity}")
+                if dur:
+                    parts.append(f"({dur})")
+                if note:
+                    parts.append(f"[{note}]")
+                v_presc.append(", ".join(parts))
+
         
-        v_para = [{"name": "dt: str, len: >0", "result": "dt: str, len: >0"}] # (AI: Yes)
+        # paraclinical (AI: Yes, No.75-76)
+        v_para = [{"name": "dt: str, len: >0", "result": "dt: str, len: >0"}]
+
+        # specialtyFindings.pediatrics (Non-AI, No.83-86)
+        v_pediatrics = _build_pediatrics(v)
 
         timeline.append({
             "visitDate": v.get("visit_date", ""),
             "specialty": v.get("specialty", ""),
             "visitCode": v.get("visit_code", ""),
-            "summary": "dt: str, len: >0", # (AI: Yes)
+            "summary": "dt: str, len: >0",                                 # AI (No.73)
             "details": {
-                "clinical": "dt: str, len: >0", # (AI: Yes)
-                "paraclinical": v_para,
-                "diagnosis": v_diagnoses,
-                "treatment": v_treatment,
-                "prescription": v_presc,
+                "clinical": "dt: str, len: >0",                            # AI (No.74)
+                "paraclinical": v_para,                                     # AI (No.75-76)
+                "diagnosis": v_diagnoses,                                   # Non-AI (No.77-79)
+                "treatment": v_treatment,                                   # Non-AI (No.80)
+                "prescription": v_presc,                                    # Non-AI (No.81)
                 "specialtyFindings": {
-                    "obstetrics": "dt: str, len: >0", 
-                    "pediatrics": None
+                    "obstetrics": "dt: str, len: >0",                       # AI (No.82)
+                    "pediatrics": v_pediatrics                              # Non-AI (No.83-86) hoặc None
                 },
-                "changesFromPrevious": [],
-                "advice": v_advice
+                "changesFromPrevious": ["dt: str, len: >0"],                # AI (No.87)
+                "advice": v_advice                                          # AI (No.88)
             }
         })
 
     output = {
-        "request_id": str(uuid.uuid4()),
+        "request_id": input_data.get("request_id", str(uuid.uuid4())),
         "data": {
             "summary": {
                 "visitCount": visit_count,

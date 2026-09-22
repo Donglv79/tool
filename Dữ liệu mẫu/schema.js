@@ -4,7 +4,9 @@
         "summary": {
             "visitCount": "integer",
             "latestVisitDate": "string",
-            "specialties": "string",
+            "specialties": [
+                "string"
+            ],
             "oneLiner": "string",
             "alerts": [
                 {

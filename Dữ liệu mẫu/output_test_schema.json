@@ -1,0 +1,260 @@
+{
+  "request_id": "568dadbc-0ee5-4a48-bc9d-44c9415e99b0",
+  "data": {
+    "summary": {
+      "visitCount": 3,
+      "latestVisitDate": "2026-08-15",
+      "specialties": [
+        "Nội cơ xương khớp",
+        "Nội tiết",
+        "Nội đa khoa"
+      ],
+      "oneLiner": "dt: str, len: >0",
+      "alerts": [
+        {
+          "type": "warning",
+          "title": "dt: str, len: >0",
+          "description": "dt: str, len: >0",
+          "identifiedDate": "dt: str, len: >0",
+          "conflict": "dt: bool",
+          "scopeNote": "dt: str, len: >0"
+        }
+      ],
+      "sections": [
+        {
+          "order": 1,
+          "title": "Tiền sử nền",
+          "items": [
+            {
+              "content": "dt: str, len: >0",
+              "since": "dt: str (MM/YYYY), len: >0"
+            }
+          ],
+          "familyHistory": [
+            "dt: str, len: >0"
+          ],
+          "obstetricHistory": "dt: str, len: >0",
+          "menstrualHistory": "dt: str, len: >0"
+        },
+        {
+          "order": 2,
+          "title": "Thuốc đang sử dụng",
+          "byPrescription": [
+            {
+              "name": "Paracetamol 500 mg",
+              "dosage": "1 viên khi đau hoặc sốt",
+              "frequency": "tối đa 3 viên/ngày",
+              "quantity": "09 viên",
+              "prescribedDate": "2026-08-15",
+              "prescriptionCode": "DT20260815003",
+              "specialty": "Nội cơ xương khớp",
+              "durationEndDate": "2026-08-18"
+            }
+          ],
+          "selfReported": [
+            {
+              "name": "Vitamin C 1g",
+              "dosage": "1 viên/ngày, dùng 2 ngày (tổng số 02 viên)",
+              "route": "Uống",
+              "askedDate": "2026-08-15"
+            },
+            {
+              "name": "Vitamin A 2000000 đơn vị / lần",
+              "dosage": "dùng 1 lần trong 1 ngày (tổng số 01 lần)",
+              "route": "Uống",
+              "askedDate": "2026-08-15"
+            }
+          ]
+        },
+        {
+          "order": 3,
+          "title": "Tình trạng bệnh nhân",
+          "latestBySpecialty": [
+            {
+              "visitDate": "2026-08-15",
+              "specialty": "Nội cơ xương khớp",
+              "vitalSigns": {
+                "pulse": 69.0,
+                "temperature": 36.6,
+                "bloodPressure": "120/74",
+                "spo2": 97,
+                "respiratoryRate": 20,
+                "weight": 75.3,
+                "height": 170.2,
+                "bmi": 26.0
+              },
+              "clinicalFindings": "dt: str, len: >0",
+              "specialtyFindings": {
+                "obstetrics": "dt: str, len: >0",
+                "pediatrics": null
+              },
+              "abnormalResults": [
+                {
+                  "name": "dt: str, len: >0",
+                  "result": "dt: str, len: >0",
+                  "abnormal": "dt: bool"
+                }
+              ],
+              "diagnoses": [
+                {
+                  "code": "M54.5",
+                  "name": "Đau cột sống thắt lưng",
+                  "description": "Đau cột sống thắt lưng"
+                },
+                {
+                  "code": "E06.3",
+                  "name": "Viêm tuyến giáp tự miễn",
+                  "description": "Viêm tuyến giáp tự miễn"
+                }
+              ],
+              "treatment": [
+                "Kê đơn.\nTư vấn vận động phù hợp và theo dõi triệu chứng."
+              ],
+              "advice": [
+                "Tránh mang vác nặng, duy trì vận động",
+                "Khám ngay nếu yếu chân/rối loạn cơ tròn"
+              ],
+              "trends": []
+            }
+          ]
+        },
+        {
+          "order": 4,
+          "title": "Việc cần theo dõi tiếp",
+          "followUpItems": [
+            "dt: str, len: >0"
+          ],
+          "followUp": []
+        }
+      ]
+    },
+    "timeline": [
+      {
+        "visitDate": "2026-08-15",
+        "specialty": "Nội cơ xương khớp",
+        "visitCode": "KCB20260815003",
+        "summary": "dt: str, len: >0",
+        "details": {
+          "clinical": "dt: str, len: >0",
+          "paraclinical": [
+            {
+              "name": "dt: str, len: >0",
+              "result": "dt: str, len: >0"
+            }
+          ],
+          "diagnosis": [
+            {
+              "code": "M54.5",
+              "name": "Đau cột sống thắt lưng",
+              "description": "Đau cột sống thắt lưng"
+            },
+            {
+              "code": "E06.3",
+              "name": "Viêm tuyến giáp tự miễn",
+              "description": "Viêm tuyến giáp tự miễn"
+            }
+          ],
+          "treatment": [
+            "Kê đơn.\nTư vấn vận động phù hợp và theo dõi triệu chứng."
+          ],
+          "prescription": [
+            "Paracetamol 500 mg, 1 viên khi đau hoặc sốt, tối đa 3 viên/ngày, Uống, SL: 09 viên, (tối đa 3 ngày)",
+            "Paracetamol 500 mg, uống 1 viên tại viện."
+          ],
+          "specialtyFindings": {
+            "obstetrics": "dt: str, len: >0",
+            "pediatrics": null
+          },
+          "changesFromPrevious": [
+            "dt: str, len: >0"
+          ],
+          "advice": [
+            "dt: str, len: >0"
+          ]
+        }
+      },
+      {
+        "visitDate": "2026-07-25",
+        "specialty": "Nội tiết",
+        "visitCode": "KCB20260725002",
+        "summary": "dt: str, len: >0",
+        "details": {
+          "clinical": "dt: str, len: >0",
+          "paraclinical": [
+            {
+              "name": "dt: str, len: >0",
+              "result": "dt: str, len: >0"
+            }
+          ],
+          "diagnosis": [
+            {
+              "code": "E06.3",
+              "name": "Viêm tuyến giáp tự miễn",
+              "description": "Viêm tuyến giáp tự miễn"
+            },
+            {
+              "code": "E78.5",
+              "name": "Rối loạn lipid máu",
+              "description": "Rối loạn lipid máu"
+            }
+          ],
+          "treatment": [
+            "Kê đơn.\nTư vấn theo dõi bệnh và tái khám định kỳ."
+          ],
+          "prescription": [
+            "Levothyroxine 25 mcg, 1 viên buổi sáng trước ăn 30 phút, Uống, SL: 02 viên, (2 ngày)"
+          ],
+          "specialtyFindings": {
+            "obstetrics": "dt: str, len: >0",
+            "pediatrics": null
+          },
+          "changesFromPrevious": [
+            "dt: str, len: >0"
+          ],
+          "advice": [
+            "dt: str, len: >0"
+          ]
+        }
+      },
+      {
+        "visitDate": "2026-06-23",
+        "specialty": "Nội đa khoa",
+        "visitCode": "KCB20260623001",
+        "summary": "dt: str, len: >0",
+        "details": {
+          "clinical": "dt: str, len: >0",
+          "paraclinical": [
+            {
+              "name": "dt: str, len: >0",
+              "result": "dt: str, len: >0"
+            }
+          ],
+          "diagnosis": [
+            {
+              "code": "E78.5",
+              "name": "Rối loạn lipid máu",
+              "description": "Rối loạn lipid máu"
+            }
+          ],
+          "treatment": [
+            "Kê đơn statin, tư vấn ăn giảm mỡ bão hòa"
+          ],
+          "prescription": [
+            "Rosuvastatin 10 mg, 1 viên buổi tối, Uống, SL: 03 viên, (3 ngày)"
+          ],
+          "specialtyFindings": {
+            "obstetrics": "dt: str, len: >0",
+            "pediatrics": null
+          },
+          "changesFromPrevious": [
+            "dt: str, len: >0"
+          ],
+          "advice": [
+            "dt: str, len: >0"
+          ]
+        }
+      }
+    ]
+  },
+  "errors": {}
+}
