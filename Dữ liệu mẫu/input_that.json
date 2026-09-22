@@ -1,11 +1,12 @@
 {
+  "request_id": "86fbce74-440d-46dd-97a8-e3ec1fbc03fa",
   "patient": {
     "pseudo_id": "2e0c4d90-54a0-5706-b66c-ce47589f0a08"
   },
   "visits": [
     {
       "visit_date": "2026-06-23",
-      "visit_code": "KCB20260623001",
+      "visit_code": "1",
       "specialty": "Nội đa khoa",
       "clinic": "PK Nội đa khoa",
       "chief_complaint": "Khám kiểm tra mỡ máu",
@@ -48,7 +49,7 @@
       },
       "labs": {
         "paraclinical_result": "Cholesterol toàn phần tăng nhẹ, LDL-C trên mục tiêu",
-        "abnormal_result": ""
+        "abnormal_result": "Cholesterol toàn phần tăng nhẹ, LDL-C trên mục tiêu; Tim phổi chưa ghi nhận bất thường"
       },
       "diagnosis": {
         "diagnosis_from_referring_facility": "",
@@ -56,7 +57,7 @@
           {
             "code": "E78.5",
             "name": "Rối loạn lipid máu",
-            "description": null
+            "description": "Bệnh lý chính đang điều trị"
           }
         ],
         "diagnosis_comorbidities": [],
@@ -66,7 +67,7 @@
         "prescription": "Không",
         "doctor_advice": "Duy trì vận động 150 phút/tuần; kiểm tra lipid và men gan sau 2-3 tháng",
         "treatment_plan": "Kê đơn statin, tư vấn ăn giảm mỡ bão hòa",
-        "followup_date": null
+        "followup_date": "2026-07-07"
       },
       "prescriptions": [
         {
@@ -74,8 +75,8 @@
           "prescribed_date": "2026-06-23",
           "prescriber": "BS. Vũ Minh Trang",
           "specialty": "Nội đa khoa",
-          "diagnosis_on_prescription": "Rối loạn lipid máu (E78.5)",
-          "allergy_on_prescription": "Không ghi nhận",
+          "diagnosis_on_prescription": "Chẩn đoán: Rối loạn lipid máu (E78.5).",
+          "allergy_on_prescription": "Chưa ghi nhận tiền sử dị ứng thuốc, thức ăn tính đến thời điểm kê đơn.",
           "items": [
             {
               "name": "Rosuvastatin 10 mg",
@@ -83,17 +84,17 @@
               "route": "Uống",
               "quantity": "03 viên",
               "duration": "3 ngày",
-              "stop_date": null,
-              "note": ""
+              "stop_date": "2026-06-25",
+              "note": "Dùng uống theo đúng hướng dẫn: 1 viên buổi tối, 3 ngày. Ngưng thuốc và báo bác sĩ nếu có biểu hiện bất thường (mẩn ngứa, khó thở, nổi ban...)."
             }
           ],
-          "doctor_note": ""
+          "doctor_note": "Kê đơn statin, tư vấn ăn giảm mỡ bão hòa. Lời dặn: Duy trì vận động 150 phút/tuần; kiểm tra lipid và men gan sau 2-3 tháng."
         }
       ]
     },
     {
       "visit_date": "2026-07-25",
-      "visit_code": "KCB20260725002",
+      "visit_code": "2",
       "specialty": "Nội tiết",
       "clinic": "PK Nội tiết",
       "chief_complaint": "Khám định kỳ bệnh tuyến giáp",
@@ -148,7 +149,7 @@
       },
       "labs": {
         "paraclinical_result": "TSH 4.66 µIU/mL; FT4 10.6 pmol/L; anti-TPO dương tính",
-        "abnormal_result": ""
+        "abnormal_result": "TSH 4; 66 µIU/mL; FT4 10; 6 pmol/L; anti-TPO dương tính; Tuyến giáp độ 0-I, không đau"
       },
       "diagnosis": {
         "diagnosis_from_referring_facility": "",
@@ -156,23 +157,23 @@
           {
             "code": "E06.3",
             "name": "Viêm tuyến giáp tự miễn",
-            "description": null
+            "description": "Bệnh lý chính đang điều trị"
           }
         ],
         "diagnosis_comorbidities": [
           {
             "code": "E78.5",
             "name": "Rối loạn lipid máu",
-            "description": null
+            "description": "Đang điều trị ngoại trú"
           }
         ],
-        "diagnosis_text": "Viêm tuyến giáp tự miễn (E06.3); Rối loạn lipid máu (E78.5)"
+        "diagnosis_text": "Viêm tuyến giáp tự miễn (E06.3)"
       },
       "plan": {
         "prescription": "Không",
         "doctor_advice": "Tái khám định kỳ, xét nghiệm TSH/FT4; khám sớm khi hồi hộp, sút cân hoặc mệt nhiều",
         "treatment_plan": "Kê đơn.\nTư vấn theo dõi bệnh và tái khám định kỳ.",
-        "followup_date": null
+        "followup_date": "2026-08-01"
       },
       "prescriptions": [
         {
@@ -180,8 +181,8 @@
           "prescribed_date": "2026-07-25",
           "prescriber": "BS. Nguyễn Đức Anh",
           "specialty": "Nội tiết",
-          "diagnosis_on_prescription": "Viêm tuyến giáp tự miễn (E06.3); Rối loạn lipid máu (E78.5)",
-          "allergy_on_prescription": "Không ghi nhận",
+          "diagnosis_on_prescription": "Chẩn đoán: Viêm tuyến giáp tự miễn (E06.3). Bệnh kèm theo: Rối loạn lipid máu (E78.5).",
+          "allergy_on_prescription": "Chưa ghi nhận tiền sử dị ứng thuốc, thức ăn tính đến thời điểm kê đơn.",
           "items": [
             {
               "name": "Levothyroxine 25 mcg",
@@ -189,17 +190,17 @@
               "route": "Uống",
               "quantity": "02 viên",
               "duration": "2 ngày",
-              "stop_date": null,
-              "note": ""
+              "stop_date": "2026-07-26",
+              "note": "Dùng uống theo đúng hướng dẫn: 1 viên buổi sáng trước ăn 30 phút, 2 ngày. Ngưng thuốc và báo bác sĩ nếu có biểu hiện bất thường (mẩn ngứa, khó thở, nổi ban...)."
             }
           ],
-          "doctor_note": ""
+          "doctor_note": "Kê đơn. Tư vấn theo dõi bệnh và tái khám định kỳ. Lời dặn: Tái khám định kỳ, xét nghiệm TSH/FT4; khám sớm khi hồi hộp, sút cân hoặc mệt nhiều."
         }
       ]
     },
     {
       "visit_date": "2026-08-15",
-      "visit_code": "KCB20260815003",
+      "visit_code": "3",
       "specialty": "Nội cơ xương khớp",
       "clinic": "PK Nội cơ xương khớp",
       "chief_complaint": "Đau thắt lưng",
@@ -248,7 +249,7 @@
       },
       "labs": {
         "paraclinical_result": "X-quang cột sống thắt lưng: thoái hóa nhẹ, không tổn thương cấp",
-        "abnormal_result": ""
+        "abnormal_result": "Không ghi nhận bất thường rõ rệt"
       },
       "diagnosis": {
         "diagnosis_from_referring_facility": "",
@@ -256,23 +257,23 @@
           {
             "code": "M54.5",
             "name": "Đau cột sống thắt lưng",
-            "description": null
+            "description": "Bệnh lý chính đang điều trị"
           }
         ],
         "diagnosis_comorbidities": [
           {
             "code": "E06.3",
             "name": "Viêm tuyến giáp tự miễn",
-            "description": null
+            "description": "Đang điều trị ngoại trú"
           }
         ],
-        "diagnosis_text": "Đau cột sống thắt lưng (M54.5); Viêm tuyến giáp tự miễn (E06.3)"
+        "diagnosis_text": "Đau cột sống thắt lưng (M54.5)"
       },
       "plan": {
         "prescription": "Paracetamol 500 mg, uống 1 viên tại viện.",
         "doctor_advice": "Tránh mang vác nặng, duy trì vận động; khám ngay nếu yếu chân/rối loạn cơ tròn",
         "treatment_plan": "Kê đơn.\nTư vấn vận động phù hợp và theo dõi triệu chứng.",
-        "followup_date": null
+        "followup_date": "2026-08-29"
       },
       "prescriptions": [
         {
@@ -280,8 +281,8 @@
           "prescribed_date": "2026-08-15",
           "prescriber": "BS. Nguyễn Văn Phúc",
           "specialty": "Nội cơ xương khớp",
-          "diagnosis_on_prescription": "Đau cột sống thắt lưng (M54.5); Viêm tuyến giáp tự miễn (E06.3)",
-          "allergy_on_prescription": "Không ghi nhận",
+          "diagnosis_on_prescription": "Chẩn đoán: Đau cột sống thắt lưng (M54.5). Bệnh kèm theo: Viêm tuyến giáp tự miễn (E06.3).",
+          "allergy_on_prescription": "Chưa ghi nhận tiền sử dị ứng thuốc, thức ăn tính đến thời điểm kê đơn.",
           "items": [
             {
               "name": "Paracetamol 500 mg",
@@ -289,11 +290,11 @@
               "route": "Uống",
               "quantity": "09 viên",
               "duration": "tối đa 3 ngày",
-              "stop_date": null,
-              "note": ""
+              "stop_date": "2026-08-17",
+              "note": "Dùng uống theo đúng hướng dẫn: 1 viên khi đau hoặc sốt, tối đa 3 viên/ngày, tối đa 3 ngày. Ngưng thuốc và báo bác sĩ nếu có biểu hiện bất thường (mẩn ngứa, khó thở, nổi ban...)."
             }
           ],
-          "doctor_note": ""
+          "doctor_note": "Kê đơn. Tư vấn vận động phù hợp và theo dõi triệu chứng. Lời dặn: Tránh mang vác nặng, duy trì vận động; khám ngay nếu yếu chân/rối loạn cơ tròn."
         }
       ]
     }

@@ -71,29 +71,15 @@ def _compute_trends(current_visit, all_visits):
                 if prev_visit is None or v_date > parse_date(prev_visit.get("visit_date", "")):
                     prev_visit = v
                     
-    empty_trend = [{
-        "name": "",
-        "from": "",
-        "fromDate": "",
-        "to": "",
-        "toDate": ""
-    }]
-    
     if prev_visit is None:
-        return empty_trend
+        return []
     
     trends = []
     
     # 1. Sinh hiệu
     vital_map = {
-        "pulse": "Mạch (lần/phút)",
-        "temperature": "Nhiệt độ (°C)",
         "blood_pressure": "Huyết áp (mmHg)",
-        "spo2": "SpO2 (%)",
-        "respiratory_rate": "Nhịp thở (lần/phút)",
-        "weight_kg": "Cân nặng (kg)",
-        "height_cm": "Chiều cao (cm)",
-        "bmi": "BMI"
+        "weight_kg": "Cân nặng (kg)"
     }
     
     cur_vitals = current_visit.get("vitals", {})
@@ -148,7 +134,7 @@ def _compute_trends(current_visit, all_visits):
                         })
                     break
 
-    return trends if trends else empty_trend
+    return trends
 
 def _extract_dosage_frequency(instruction):
     """Tách tần suất/cách dùng từ dosage_instruction (No.22). Theo yêu cầu mới, không tách mà lấy toàn bộ chuỗi."""
@@ -166,32 +152,14 @@ def _extract_dosage_from_name(name):
     return ""
 
 def _build_pediatrics(visit):
-    """Map pediatrics từ examination fields, chỉ dùng cho phiếu Nhi (Non-AI, No.45-48, 83-86)."""
-    def _is_garbage(text):
-        t = str(text).strip().lower()
-        if not t or t in ["không", "null", "none"]:
-            return True
-        for p in ["chưa ghi nhận", "không ghi nhận", "không có", "bình thường", "không có thông tin"]:
-            if p in t:
-                return True
-        return False
-
-    empty_pediatrics = {
-        "nutrition": "",
-        "vaccination": "",
-        "motorDevelopment": "",
-        "mentalDevelopment": ""
-    }
-
-    if "Nhi" not in visit.get("specialty", ""):
-        return empty_pediatrics
+    """Map pediatrics từ examination fields, lấy mọi lúc không check specialty."""
+    exam = visit.get("examination") or {}
     
-    exam = visit.get("examination", {})
     return {
-        "nutrition": exam.get("nutrition_assessment", "") if not _is_garbage(exam.get("nutrition_assessment", "")) else "",
-        "vaccination": exam.get("vaccination_assessment", "") if not _is_garbage(exam.get("vaccination_assessment", "")) else "",
-        "motorDevelopment": exam.get("motor_development", "") if not _is_garbage(exam.get("motor_development", "")) else "",
-        "mentalDevelopment": exam.get("mental_development", "") if not _is_garbage(exam.get("mental_development", "")) else "",
+        "nutrition": exam.get("nutrition_assessment") or exam.get("nutrition assessment") or "",
+        "vaccination": exam.get("vaccination_assessment") or exam.get("vaccination assessment") or "",
+        "motorDevelopment": exam.get("motor_development") or exam.get("motor development") or "",
+        "mentalDevelopment": exam.get("mental_development") or exam.get("mental development") or ""
     }
 
 def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -213,13 +181,34 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         if spec and spec not in specialties:
             specialties.append(spec)
 
-    def is_garbage(text):
-        t = str(text).strip().lower()
-        if not t or t in ["không", "null", "none"]:
+    def is_garbage(data):
+        if not data:
             return True
-        for p in ["chưa ghi nhận", "không ghi nhận", "không có", "bình thường", "không có thông tin"]:
+            
+        if isinstance(data, dict):
+            if not data: return True
+            return all(is_garbage(v) for v in data.values())
+            
+        if isinstance(data, list):
+            if not data: return True
+            return all(is_garbage(v) for v in data)
+            
+        t = str(data).strip().lower()
+        if t in ["không", "null", "none", "[]", "{}"]:
+            return True
+            
+        garbage_phrases = [
+            "chưa ghi nhận", "không ghi nhận", "không có", "bình thường", "không có thông tin",
+            "không ghi nhận bất thường", "chưa ghi nhận bất thường", "không bất thường"
+        ]
+        if t in garbage_phrases:
+            return True
+            
+        for p in garbage_phrases:
             if p in t:
-                return True
+                if len(t) <= len(p) + 15:
+                    return True
+                    
         return False
         
     history = latest_visit.get("history", {})
@@ -228,41 +217,37 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
     # ============================================================
     # 1. oneLiner (AI: Yes, No.5)
     # ============================================================
-    one_liner = "dt: str, len: >0"
+    one_liner = "dt: str, len: >= 1"
     
     # ============================================================
     # 2. alerts (AI: Yes, No.6-12 — toàn bộ object là AI)
     # ============================================================
-    alerts = [{
-        "type": "warning",                        # Non-AI (No.7): hardcode "warning"
-        "title": "dt: str, len: >0",
-        "description": "dt: str, len: >0",
-        "identifiedDate": "dt: str, len: >0",
-        "conflict": "dt: bool",
-        "scopeNote": "dt: str, len: >0"
-    }]
+    has_valid_alerts = any(not is_garbage(v.get("allergies")) or not is_garbage(v.get("history", {}).get("allergy_history")) for v in visits)
+    alerts = "dt: list, len: >= 1" if has_valid_alerts else []
 
     # ============================================================
     # 3. Section 1: Tiền sử nền
     # ============================================================
     # items (AI: Yes, No.15-16)
-    items = [{
-        "content": "dt: str, len: >0",
-        "since": "dt: str (MM/YYYY), len: >0"
-    }]
+    has_valid_pmh = any(not is_garbage(v.get("history", {}).get("past_medical_history")) or not is_garbage(v.get("history", {}).get("medical_history")) for v in visits)
+    items = "dt: list, len: >= 1" if has_valid_pmh else []
     
     # familyHistory (AI: Yes, No.17 — Dev confirm Y)
-    family_history = ["dt: str, len: >0"]
+    has_valid_fh = any(not is_garbage(v.get("history", {}).get("family_history")) for v in visits)
+    family_history = "dt: list, len: >= 1" if has_valid_fh else []
 
     # obstetricHistory (AI: Yes, No.18 — Dev confirm Y)
     # menstrualHistory (AI: Yes, No.19 — Dev confirm Y)
+    has_valid_obs = any(not is_garbage(v.get("history", {}).get("obstetric_history")) for v in visits)
+    has_valid_men = any(not is_garbage(v.get("history", {}).get("menstrual_history")) for v in visits)
+
     section_1 = {
         "order": 1,
         "title": "Tiền sử nền",
         "items": items,
         "familyHistory": family_history,
-        "obstetricHistory": "dt: str, len: >0",
-        "menstrualHistory": "dt: str, len: >0"
+        "obstetricHistory": "dt: str, len: >= 1" if has_valid_obs else "",
+        "menstrualHistory": "dt: str, len: >= 1" if has_valid_men else ""
     }
 
     # ============================================================
@@ -365,7 +350,8 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         diag_text = str(v_diag_sel.get("diagnosis_text", "")).strip()
         
         def _get_desc(d):
-            return d.get("description")
+            desc = d.get("description")
+            return desc if desc else None
 
         for d in v_diag_sel.get("diagnosis_primary", []):
             diagnoses_sel.append({
@@ -391,20 +377,14 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
                 if part and not is_garbage(part):
                     treatment_sel.append(format_sentence(part))
 
-        # advice (Non-AI, No.56): Tách lời dặn từ doctor_advice
+        # advice (Non-AI, No.56): Giữ nguyên lời dặn từ doctor_advice
         advice_sel = []
-        if v_plan_sel.get("doctor_advice"):
-            for part in v_plan_sel.get("doctor_advice", "").split(";"):
-                part = part.strip()
-                if part and not is_garbage(part):
-                    advice_sel.append(format_sentence(part))
+        advice_text = str(v_plan_sel.get("doctor_advice", "")).strip()
+        if advice_text and not is_garbage(advice_text):
+            advice_sel.append(format_sentence(advice_text))
 
         # abnormalResults (AI: Yes, No.49-51)
-        abnormal_results_sel = [{
-            "name": "dt: str, len: >0", 
-            "result": "dt: str, len: >0",
-            "abnormal": "dt: bool"
-        }]
+        abnormal_results_sel = [] if is_garbage(v_sel.get("labs", {}).get("abnormal_result")) else "dt: list, len: >= 1"
 
         # vitalSigns (Non-AI, No.35-42)
         vitals = v_sel.get("vitals", {})
@@ -424,9 +404,9 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
                 "height": float(vitals.get("height_cm", "0") or 0),
                 "bmi": float(vitals.get("bmi", "0") or 0)
             },
-            "clinicalFindings": "dt: str, len: >0",                     # AI (No.43)
+            "clinicalFindings": '' if is_garbage(v_sel.get("examination")) else "dt: str, len: >= 1",                     # AI (No.43)
             "specialtyFindings": {
-                "obstetrics": "dt: str, len: >0",                       # AI (No.44)
+                "obstetrics": '' if is_garbage(v_sel.get("examination", {}).get("obstetrics")) else "dt: str, len: >= 1",                       # AI (No.44)
                 "pediatrics": _build_pediatrics(v_sel)                  # Non-AI (No.45-48) hoặc None
             },
             "abnormalResults": abnormal_results_sel,                     # AI (No.49-51)
@@ -446,11 +426,12 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
     # 6. Section 4: Việc cần theo dõi tiếp
     # ============================================================
     # followUpItems (AI: Yes, No.63 — Dev confirm Y)
-    follow_up_items = ["dt: str, len: >0"]
+    lv_plan_all = latest_visit.get("plan", {})
+    follow_up_items = [] if is_garbage(lv_plan_all.get("doctor_advice")) else "dt: list, len: >= 1"
     
     # followUp (Non-AI, No.64-68)
     follow_up = []
-    for lv in selected_visits:
+    for lv in visits:
         lv_plan = lv.get("plan", {})
         if lv_plan.get("followup_date"):
             fu_date_str = lv_plan.get("followup_date", "")
@@ -466,8 +447,8 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
                 fu_note = "Không đủ dữ liệu xác định tính hợp lệ"
             elif fu_date_obj > lv_date_obj:
                 fu_valid = True
-                if fu_date_obj < now:
-                    fu_note = "Quá hạn"
+                if fu_date_obj.date() < now.date():
+                    fu_note = f"quá hạn từ {fu_date_obj.strftime('%d/%m')}"
             else:
                 fu_valid = False
                 fu_note = "Ngày hẹn không hợp lệ (trước hoặc bằng ngày khám)"
@@ -490,12 +471,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         "order": 4,
         "title": "Việc cần theo dõi tiếp",
         "followUpItems": follow_up_items,
-        "followUp": follow_up if follow_up else [{
-            "specialty": "",
-            "date": "",
-            "valid": False,
-            "note": ""
-        }]
+        "followUp": follow_up
     }
 
     # ============================================================
@@ -509,7 +485,8 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         diag_text = str(v_diag.get("diagnosis_text", "")).strip()
         
         def _get_timeline_desc(d):
-            return d.get("description")
+            desc = d.get("description")
+            return desc if desc else None
 
         for d in v_diag.get("diagnosis_primary", []):
             v_diagnoses.append({
@@ -536,7 +513,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
                     v_treatment.append(format_sentence(part))
 
         # advice (AI: Yes, No.88 — Dev confirm Y)
-        v_advice = ["dt: str, len: >0"]
+        v_advice = [] if is_garbage(v_plan.get("doctor_advice")) and is_garbage(v_plan.get("treatment_plan")) else "dt: list, len: >= 1"
 
         # prescription (Non-AI, No.81 — Dev confirm N): Tóm tắt đơn thuốc của chính lượt
         v_presc = []
@@ -561,27 +538,38 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
 
         
         # paraclinical (AI: Yes, No.75-76)
-        v_para = [{"name": "dt: str, len: >0", "result": "dt: str, len: >0"}]
+        v_para = [] if is_garbage(v.get("labs")) else "dt: list, len: >= 1"
 
         # specialtyFindings.pediatrics (Non-AI, No.83-86)
         v_pediatrics = _build_pediatrics(v)
+
+        has_prev_same_specialty = False
+        v_date_obj = parse_date(v.get("visit_date", ""))
+        for other_v in visits:
+            if other_v == v:
+                continue
+            if other_v.get("specialty") == v.get("specialty"):
+                other_date_obj = parse_date(other_v.get("visit_date", ""))
+                if other_date_obj < v_date_obj and other_date_obj != datetime.min:
+                    has_prev_same_specialty = True
+                    break
 
         timeline.append({
             "visitDate": v.get("visit_date", ""),
             "specialty": v.get("specialty", ""),
             "visitCode": v.get("visit_code", ""),
-            "summary": "dt: str, len: >0",                                 # AI (No.73)
+            "summary": '' if is_garbage(v.get("chief_complaint")) and is_garbage(v.get("diagnosis")) else "dt: str, len: >= 1",                                 # AI (No.73)
             "details": {
-                "clinical": "dt: str, len: >0",                            # AI (No.74)
+                "clinical": '' if is_garbage(v.get("history")) and is_garbage(v.get("vitals")) and is_garbage(v.get("examination")) else "dt: str, len: >= 1",                            # AI (No.74)
                 "paraclinical": v_para,                                     # AI (No.75-76)
                 "diagnosis": v_diagnoses,                                   # Non-AI (No.77-79)
                 "treatment": v_treatment,                                   # Non-AI (No.80)
                 "prescription": v_presc,                                    # Non-AI (No.81)
                 "specialtyFindings": {
-                    "obstetrics": "dt: str, len: >0",                       # AI (No.82)
+                    "obstetrics": '' if is_garbage(v.get("examination", {}).get("obstetrics")) else "dt: str, len: >= 1",                       # AI (No.82)
                     "pediatrics": v_pediatrics                              # Non-AI (No.83-86) hoặc None
                 },
-                "changesFromPrevious": ["dt: str, len: >0"],                # AI (No.87)
+                "changesFromPrevious": "dt: list, len: >= 1" if has_prev_same_specialty else [],                # AI (No.87)
                 "advice": v_advice                                          # AI (No.88)
             }
         })
