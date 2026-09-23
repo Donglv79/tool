@@ -137,21 +137,119 @@ def _build_prescription_summaries(visit):
     summaries = []
     for prescription in visit.get("prescriptions", []):
         for item in prescription.get("items", []):
-            parts = []
-            if item.get("name"):
-                parts.append(item["name"])
-            if item.get("dosage_instruction"):
-                parts.append(item["dosage_instruction"])
-            if item.get("route"):
-                parts.append(item["route"])
-            if item.get("quantity"):
-                parts.append(f'SL: {item["quantity"]}')
-            if item.get("duration"):
-                parts.append(f'({item["duration"]})')
-            if item.get("note"):
-                parts.append(f'[{item["note"]}]')
-            summaries.append(" ".join(parts).strip())
+            name = str(item.get("name") or "").strip()
+            if not name:
+                continue
+
+            parts = [name]
+            frequency = _abbreviate_frequency(
+                _extract_frequency_for_timeline(item.get("dosage_instruction"))
+            )
+            if frequency:
+                parts.append(frequency)
+
+            duration = item.get("duration")
+            if duration:
+                parts.append(f"({duration})")
+
+            summaries.append(" ".join(parts))
     return summaries
+
+
+def _extract_frequency_for_timeline(instruction):
+    """Bỏ nhãn route/prefix và route-code khỏi dosage instruction."""
+    text = str(instruction or "").strip()
+    if not text:
+        return ""
+
+    route_words = (
+        r"uống|tiêm|bôi|hít|nhỏ|ngậm|truyền|"
+        r"dùng ngoài|ngoài da|po|iv|im|sc|sq|sl|oral|topical"
+    )
+    text = re.sub(
+        rf"^\s*đường\s*dùng\s*:\s*(?:{route_words})\s*[,;|:-]?\s*",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
+    text = re.sub(
+        r"\s*[,;|]\s*(?:PO|IV|IM|SC|SQ|SL|ORAL|TOPICAL)\s*$",
+        "",
+        text,
+        flags=re.IGNORECASE,
+    )
+    return text.strip()
+
+
+def _abbreviate_frequency(instruction):
+    """Rút dosage instruction thành tag tần suất ngắn cho timeline."""
+    text = str(instruction or "").strip().lower()
+    if not text:
+        return ""
+
+    explicit = re.search(r"(?<!\d)(\d+)\s*lần\s*/\s*ngày\b", text)
+    if not explicit:
+        explicit = re.search(r"\bngày\s+(\d+)\s*lần\b", text)
+    if explicit:
+        return f"x{explicit.group(1)}/ngày"
+
+    every_hours = re.search(r"\bmỗi\s+(\d+)\s*giờ\b", text)
+    if every_hours:
+        hours = int(every_hours.group(1))
+        if hours and 24 % hours == 0:
+            return f"x{24 // hours}/ngày"
+
+    for period in ("sáng", "trưa", "chiều", "tối"):
+        if re.search(rf"\bbuổi\s+{period}\b", text):
+            return f"x1/{period}"
+
+    if re.search(r"/\s*ngày\b", text):
+        return "x1/ngày"
+
+    return ""
+
+
+def _parse_paraclinical_results(value):
+    """Chuẩn hóa paraclinical_result thành [{name, result}]."""
+    if _is_garbage(value):
+        return []
+
+    if isinstance(value, list):
+        results = []
+        for item in value:
+            if not isinstance(item, dict):
+                continue
+            name = str(item.get("name") or "").strip()
+            result = str(item.get("result") or "").strip()
+            if name and result:
+                results.append({"name": name, "result": result})
+        return results
+
+    if not isinstance(value, str):
+        return []
+
+    results = []
+    for part in value.split(";"):
+        part = part.strip()
+        if not part:
+            continue
+
+        if ":" in part:
+            name, result = part.split(":", 1)
+            name, result = name.strip(), result.strip()
+        else:
+            match = re.match(
+                r"^(?P<name>.+?)\s+(?P<result>[+-]?\d+(?:[.,]\d+)?(?:\s*%|\s+.*)?)$",
+                part,
+            )
+            if not match:
+                continue
+            name = match.group("name").strip()
+            result = match.group("result").strip()
+
+        if name and result:
+            results.append({"name": name, "result": result})
+    return results
 
 
 def _compute_trends(current_visit, all_visits):
@@ -203,33 +301,28 @@ def _compute_trends(current_visit, all_visits):
             })
             
     # 2. Cận lâm sàng
-    cur_labs = current_visit.get("labs", {})
-    prev_labs = prev_visit.get("labs", {})
-    
-    cur_para = cur_labs.get("paraclinical_result", [])
-    prev_para = prev_labs.get("paraclinical_result", [])
-    
-    if isinstance(cur_para, list) and isinstance(prev_para, list):
-        for cp in cur_para:
-            cp_name = (cp.get("name") or "").strip()
-            cp_res = (cp.get("result") or "").strip()
-            if not cp_name or not cp_res:
-                continue
-                
-            for pp in prev_para:
-                pp_name = (pp.get("name") or "").strip()
-                pp_res = (pp.get("result") or "").strip()
-                
-                if pp_name.lower() == cp_name.lower() and pp_res:
-                    if cp_res != pp_res:
-                        trends.append({
-                            "name": cp_name,
-                            "from": pp_res,
-                            "fromDate": prev_visit.get("visit_date", ""),
-                            "to": cp_res,
-                            "toDate": current_visit.get("visit_date", "")
-                        })
-                    break
+    cur_labs = current_visit.get("labs") or {}
+    prev_labs = prev_visit.get("labs") or {}
+    cur_para = _parse_paraclinical_results(cur_labs.get("paraclinical_result"))
+    prev_para = _parse_paraclinical_results(prev_labs.get("paraclinical_result"))
+
+    for current_result in cur_para:
+        current_name = current_result["name"]
+        current_value = current_result["result"]
+        for previous_result in prev_para:
+            previous_name = previous_result["name"]
+            previous_value = previous_result["result"]
+
+            if previous_name.casefold() == current_name.casefold() and previous_value:
+                if current_value != previous_value:
+                    trends.append({
+                        "name": current_name,
+                        "from": previous_value,
+                        "fromDate": prev_visit.get("visit_date", ""),
+                        "to": current_value,
+                        "toDate": current_visit.get("visit_date", "")
+                    })
+                break
 
     return trends
 
@@ -245,7 +338,11 @@ def _extract_dosage_from_name(name):
     """Tách liều (hàm lượng) từ tên thuốc (No.21)."""
     if not name:
         return ""
-    match = re.search(r'(\d+(?:\.\d+)?\s*(?:mg|mcg|g|ml|đơn vị|IU|UI).*)$', name, re.IGNORECASE)
+    match = re.search(
+        r"(\d+(?:[.,]\d+)?\s*(?:mcg|mg|ml|g|đơn vị|IU|UI))(?=$|[\s,;/()])",
+        name,
+        re.IGNORECASE,
+    )
     if match:
         return match.group(1).strip()
     return ""
@@ -261,6 +358,20 @@ def _build_pediatrics(visit):
         "motorDevelopment": exam.get("motor_development") or exam.get("motor development") or "",
         "mentalDevelopment": exam.get("mental_development") or exam.get("mental development") or ""
     }
+
+
+def _build_obstetrics(visit):
+    """Chỉ trả nội dung khám chuyên khoa cho lượt khám Sản; khoa khác trả None."""
+    specialty = str(visit.get("specialty") or "").strip().casefold()
+    if "sản" not in specialty:
+        return None
+
+    examination = visit.get("examination") or {}
+    obstetrics = examination.get("specialty_examination")
+    if not isinstance(obstetrics, str) or not obstetrics.strip():
+        return None
+
+    return obstetrics.strip()
 
 
 def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -404,8 +515,6 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         if advice_text and not _is_garbage(advice_text):
             advice_sel.append(format_sentence(advice_text))
 
-        # abnormalResults (AI: Yes, No.49-51)
-
         # vitalSigns (Non-AI, No.35-42)
         vitals = v_sel.get("vitals", {})
         pulse = vitals.get("pulse", 0)
@@ -426,7 +535,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
             },
             "clinicalFindings": AI_STR,                         # AI (No.43)
             "specialtyFindings": {
-                "obstetrics": AI_STR,                           # AI (No.44)
+                "obstetrics": _build_obstetrics(v_sel),        # Chỉ phiếu Sản; khoa khác trả null (No.44)
                 "pediatrics": _build_pediatrics(v_sel)                  # Non-AI (No.45-48) hoặc None
             },
             "abnormalResults": AI_LIST,                         # AI (No.49-51)
@@ -450,7 +559,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
     
     # followUp (Non-AI, No.64-68)
     follow_up = []
-    for lv in visits:
+    for lv in selected_visits:
         lv_plan = lv.get("plan", {})
         if lv_plan.get("followup_date"):
             fu_date_str = lv_plan.get("followup_date", "")
@@ -520,7 +629,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
                 "treatment": v_treatment,                                   # Non-AI (No.80)
                 "prescription": v_presc,                                    # Non-AI (No.81)
                 "specialtyFindings": {
-                    "obstetrics": AI_STR,                           # AI (No.82)
+                    "obstetrics": _build_obstetrics(v),            # Chỉ phiếu Sản; khoa khác trả null (No.82)
                     "pediatrics": _build_pediatrics(v)              # Non-AI (No.83-86)
                 },
                 "changesFromPrevious": AI_LIST,                     # AI (No.87)
