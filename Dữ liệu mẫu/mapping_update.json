@@ -6,9 +6,10 @@
     "OUTPUT FIELD": "requestId",
     "Data type output": "string",
     "CÁCH MAP": "out = in",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: request_id\n2. Xử lý:\nLấy nguyên request_id từ input và gán vào requestId của output.\n3. Ghi kết quả vào: requestId",
     "Have AI": "",
     "Comment": "",
-    "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, Phụ lục D — kiểm tra tích hợp\nKiểm tra AI Service tiếp nhận request, bảo toàn requestId và trả response/errors đúng contract\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 2.5\n  \"requestId\": \"aba4cc98-cef0-4d52-af47-3a4e1a407bac\",\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5\n  \"requestId\": \"aba4cc98-cef0-4d52-af47-3a4e1a407bac\","
+    "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, Phụ lục D — kiểm tra tích hợp\nKiểm tra AI Service tiếp nhận request, bảo toàn requestId và trả response/errors đúng contract\n"
   },
   {
     "No.": 2,
@@ -17,6 +18,7 @@
     "OUTPUT FIELD": "data.summary.visitCount",
     "Data type output": "number (integer)",
     "CÁCH MAP": "out = len(in)",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[]\n2. Xử lý:\nĐếm số lượt khám trong visits[]. Nếu danh sách rỗng thì visitCount = 0.\n3. Ghi kết quả vào: data.summary.visitCount",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\nPayload dưới đây là template cấu trúc response đã chốt. Giá trị chỉ để minh họa và không phải expected output của input tại mục 2.5. Không bổ sung field ngoài contract. \"visitCount\": 3,\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.7\nMọi lượt khám hợp lệ xuất hiện trong timeline, ghi rõ visitDate, specialty và visitCode; sắp xếp visitDate giảm dần."
@@ -28,9 +30,10 @@
     "OUTPUT FIELD": "data.summary.latestVisitDate",
     "Data type output": "string (date)",
     "CÁCH MAP": "out = max(parse_date(in))",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].visit_date\n2. Xử lý:\nBỏ các ngày khám bị trống hoặc sai định dạng.\nTrong các ngày hợp lệ, chọn ngày mới nhất.\nNếu không có ngày hợp lệ thì trả chuỗi rỗng.\n3. Ghi kết quả vào: data.summary.latestVisitDate",
     "Have AI": "",
     "Comment": "",
-    "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.1\nLượt khám có visitDate gần nhất trong toàn bộ visits[] luôn được đưa vào latestBySpecialty.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n      \"latestVisitDate\": \"2026-03-21\",\n\nGhi chú đối chiếu (không phải trích dẫn PRD): Template có latestVisitDate; công thức max(parse_date(in)) là cách triển khai suy ra từ ý nghĩa ngày gần nhất."
+    "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.1\nLượt khám có visitDate gần nhất trong toàn bộ visits[] luôn được đưa vào latestBySpecialty.\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n      \"latestVisitDate\": \"2026-03-21\","
   },
   {
     "No.": 4,
@@ -39,20 +42,22 @@
     "OUTPUT FIELD": "data.summary.specialties[]",
     "Data type output": "array<string>",
     "CÁCH MAP": "out = unique(in)",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].specialty\n2. Xử lý:\nLấy specialty của tất cả lượt khám.\nBỏ giá trị trống và bỏ tên khoa bị trùng, nhưng giữ nguyên thứ tự xuất hiện.\n3. Ghi kết quả vào: data.summary.specialties[]",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 2.2\nspecialty\nChuỗi chuyên khoa/loại lượt khám theo nguồn, ví dụ 'OPD - Phòng khám Nhi'\nLưu ý: formStatus chỉ dùng tại bước lọc phía EForm và không thuộc payload. Trong payload, lượt khám được nhận diện bằng visitCode; specialty và clinic giữ nguyên giá trị từ nguồn.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.8\nPhase 2 tổng hợp chung các lượt khám thuộc phạm vi. Mỗi field giữ nguồn chuyên khoa theo contract; không tách one-liner thành nhiều bản theo khoa.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n      \"specialties\": [\n        \"Phòng khám Nội\",\n        \"Phòng khám Sản\"\n      ],\n\nGhi chú đối chiếu (không phải trích dẫn PRD): PRD có mảng specialties nhưng không nêu trực tiếp thuật toán unique hoặc thứ tự phần tử."
   },
   {
     "No.": 5,
-    "INPUT FIELD": "visits[].history.past_medical_history\nvisits[].diagnosis\nvisits[].prescriptions[]; visits[].history.current_medications[]\nvisits[].history.medication_status\nvisit_date, specialty, chief_complaint\nlabs.abnormal_result\nvisits[].history.obstetric_history;\nvisits[].history.allergy\nprescriptions[].allergy_on_prescription",
+    "INPUT FIELD": "visits[].history.past_medical_history\nvisits[].history.current_medications[] (hiện tại chưa dùng theo yêu cầu của PO)\nvisits[].history.medication_status (hiện tại chưa dùng theo yêu cầu của PO)\nvisits[].diagnosis.*\nvisits[].diagnosis.diagnosis_from_referring_facility\nvisits[].prescriptions[]\nvisits[].prescriptions[].diagnosis_on_prescription\nvisits[].visit_date; visits[].specialty; visits[].chief_complaint\nvisits[].labs.abnormal_result\nvisits[].history.obstetric_history\nvisits[].history.allergy\nvisits[].prescriptions[].allergy_on_prescription",
     "Data type input": "mixed",
     "OUTPUT FIELD": "data.summary.oneLiner",
     "Data type output": "string",
     "CÁCH MAP": "out = AI_summarize(in)",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
     "Have AI": "Yes",
     "Comment": "",
-    "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.1\n4.1. One-liner\nOne-liner là một câu ngắn giúp bác sĩ nhận diện nhanh người bệnh; không phải bản nén của mọi lượt khám. Chi tiết được trình bày ở các thành phần bên dưới và tab Dòng thời gian.\n4.1.1. Cấu trúc nội dung\n[Tuổi/giới] - [bệnh nền hoặc tiền sử chính, kèm mốc nếu nguồn có] - [thuốc đang sử dụng có căn cứ] - [trạng thái Sản ảnh hưởng điều trị nếu nguồn ghi] - [lượt khám gần nhất: ngày, chuyên khoa, vấn đề chính] - [dị ứng nếu có].\nChỉ giữ các cụm có dữ liệu. Không thêm câu 'không ghi nhận', 'không có' hoặc giá trị mặc định để lấp phần trống; không lặp cùng một ý ở nhiều cụm.\nBệnh nền/tiền sử chính: lấy từ history.pastMedicalHistory và chẩn đoán có ý nghĩa lâm sàng trong phạm vi. Mốc thời gian chỉ ghi khi nguồn có; không lấy ngày xuất hiện đầu tiên để thay cho ngày chẩn đoán.\nThuốc đang sử dụng: chỉ nêu thuốc có căn cứ còn sử dụng từ byPrescription còn hạn hoặc selfReported khi medicationStatus=true. Nếu không đủ căn cứ thì bỏ cụm thuốc khỏi one-liner.\nVấn đề của lượt gần nhất: nêu lý do khám, chẩn đoán hoặc bất thường đã được nguồn ghi nhận. Chỉ dùng nhận định 'ổn định', 'cải thiện', 'xấu đi' khi nguồn ghi rõ hoặc có hai mốc số liệu được trình bày trực tiếp.\nTrạng thái Sản: chỉ nêu tình trạng thai kỳ/hậu sản khi nguồn có nội dung rõ trong tiền sử, khám hoặc chẩn đoán văn bản. Giữ ngày ghi nhận; không tự tính tuổi thai hiện tại và không kết luận tình trạng đã thay đổi.\nKhông đưa vào one-liner: ngày hẹn tái khám, danh sách đầy đủ mã ICD, kết luận điều trị do AI tự đánh giá hoặc thông tin không truy vết được về payload."
+    "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.1\n4.1. One-liner\nOne-liner là một câu ngắn giúp bác sĩ nhận diện nhanh người bệnh; không phải bản nén của mọi lượt khám. Chi tiết được trình bày ở các thành phần bên dưới và tab Dòng thời gian.\n4.1.1. Cấu trúc nội dung\n[Tuổi/giới] - [bệnh nền hoặc tiền sử chính, kèm mốc nếu nguồn có] - [thuốc đang sử dụng có căn cứ] - [trạng thái Sản ảnh hưởng điều trị nếu nguồn ghi] - [lượt khám gần nhất: ngày, chuyên khoa, vấn đề chính] - [dị ứng nếu có].\nChỉ giữ các cụm có dữ liệu. Không thêm câu 'không ghi nhận', 'không có' hoặc giá trị mặc định để lấp phần trống; không lặp cùng một ý ở nhiều cụm.\n•\tBệnh nền/tiền sử chính: lấy từ history.pastMedicalHistory và chẩn đoán có ý nghĩa lâm sàng trong phạm vi. Mốc thời gian chỉ ghi khi nguồn có; không lấy ngày xuất hiện đầu tiên để thay cho ngày chẩn đoán.\n•\tThuốc đang sử dụng: chỉ nêu thuốc có căn cứ còn sử dụng từ byPrescription còn hạn hoặc selfReported khi medicationStatus=true. Nếu không đủ căn cứ thì bỏ cụm thuốc khỏi one-liner.\n\n•\tVấn đề của lượt gần nhất: nêu lý do khám, chẩn đoán hoặc bất thường đã được nguồn ghi nhận. Chỉ dùng nhận định 'ổn định', 'cải thiện', 'xấu đi' khi nguồn ghi rõ hoặc có hai mốc số liệu được trình bày trực tiếp.\n\n•\tTrạng thái Sản: chỉ nêu tình trạng thai kỳ/hậu sản khi nguồn có nội dung rõ trong tiền sử, khám hoặc chẩn đoán văn bản. Giữ ngày ghi nhận; không tự tính tuổi thai hiện tại và không kết luận tình trạng đã thay đổi.\n\n•\tKhông đưa vào one-liner: ngày hẹn tái khám, danh sách đầy đủ mã ICD, kết luận điều trị do AI tự đánh giá hoặc thông tin không truy vết được về payload.\n\n4.9. Bảng kiểm nội dung bắt buộc\n1. One-liner: Tuổi/giới; bệnh nền chính kèm mốc; thuốc chính đang dùng; vấn đề đang hoạt động lần gần nhất; chỉ số theo dõi bệnh chính kèm mốc (nếu có xu hướng); dị ứng (nếu có); *trạng thái thai kỳ (nếu có)\t\nNguồn dữ liệu: patient; diagnosis; prescriptions; labs; history.allergy"
   },
   {
     "No.": 6,
@@ -60,10 +65,11 @@
     "Data type input": "string",
     "OUTPUT FIELD": "data.summary.alerts[]",
     "Data type output": "array<object>",
-    "CÁCH MAP": "out = has_allergy_alerts_mismatch(in) if has_allergy_or_conflict(in) else []\n//Gộp dị ứng toàn phạm vi; nếu mâu thuẫn giữ cả hai nội dung, không chọn bên đúng. Không có dị ứng được ghi nhận",
-    "Have AI": "",
+    "CÁCH MAP": "out = AI_summarize(in)",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
+    "Have AI": "Yes",
     "Comment": "",
-    "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.2\n4.2. Cảnh báo dị ứng\nNguồn gồm history.allergy và prescriptions[].allergyOnPrescription trong phạm vi payload; scopeNote phải nêu rõ phạm vi tổng hợp.\nidentifiedDate chỉ điền khi nguồn có ngày ghi nhận; không dùng visitDate thay cho ngày phát hiện nếu nguồn không xác nhận.\nNếu các lượt hoặc hai nguồn ghi khác nhau, alerts trả cả hai nội dung, đặt conflict=true và không tự chọn nguồn đúng.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.8\nGộp chung toàn bộ chuyên khoa, hiển thị một lần. Ghi rõ khoa và ngày ghi nhận. Nếu hai khoa ghi khác nhau thì nêu cả hai và đánh dấu mâu thuẫn."
+    "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.2\n4.2. Cảnh báo dị ứng\nNguồn gồm history.allergy và prescriptions[].allergyOnPrescription trong phạm vi payload; scopeNote phải nêu rõ phạm vi tổng hợp.\nidentifiedDate chỉ điền khi nguồn có ngày ghi nhận; không dùng visitDate thay cho ngày phát hiện nếu nguồn không xác nhận.\nNếu các lượt hoặc hai nguồn ghi khác nhau, alerts trả cả hai nội dung, đặt conflict=true và không tự chọn nguồn đúng.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.8\nGộp chung toàn bộ chuyên khoa, hiển thị một lần. Ghi rõ khoa và ngày ghi nhận. Nếu hai khoa ghi khác nhau thì nêu cả hai và đánh dấu mâu thuẫn.\n\n4.9. Bảng kiểm nội dung bắt buộc\n2. Cảnh báo dị ứng: Tên tác nhân; biểu hiện; ngày ghi nhận; *khoa ghi nhận; ghi chú phạm vi tổng hợp; *cờ mâu thuẫn nếu các nguồn ghi khác nhau\t\nNguồn dữ liệu: history.allergy; *prescriptions.allergyOnPrescription"
   },
   {
     "No.": 7,
@@ -72,6 +78,7 @@
     "OUTPUT FIELD": "data.summary.alerts[].type",
     "Data type output": "string",
     "CÁCH MAP": "out = \"warning\" // khi tạo một alert",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].history.allergy; visits[].prescriptions[].allergy_on_prescription\n2. Xử lý:\nNếu có cảnh báo dị ứng thì đặt type = \"warning\".\nNếu không có cảnh báo thì không tạo phần tử alert.\n3. Ghi kết quả vào: data.summary.alerts[].type",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\nPayload dưới đây là template cấu trúc response đã chốt. Giá trị chỉ để minh họa và không phải expected output của input tại mục 2.5. Không bổ sung field ngoài contract. \"type\": \"warning\",\n\nGhi chú đối chiếu (không phải trích dẫn PRD): warning là giá trị minh họa; PRD không công bố đầy đủ enum cho type."
@@ -82,8 +89,9 @@
     "Data type input": "string",
     "OUTPUT FIELD": "data.summary.alerts[].title",
     "Data type output": "string",
-    "CÁCH MAP": "out = extract_allergen(in) //Trích tác nhân/nội dung dị ứng có trong nguồn.",
-    "Have AI": "",
+    "CÁCH MAP": "out = AI_summarize(in)",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
+    "Have AI": "Yes",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.9 — Cảnh báo dị ứng\nTên tác nhân; biểu hiện; ngày ghi nhận; *khoa ghi nhận; ghi chú phạm vi tổng hợp; *cờ mâu thuẫn nếu các nguồn ghi khác nhau\nhistory.allergy; *prescriptions.allergyOnPrescription\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n          \"title\": \"Dị ứng Amoxicillin\","
   },
@@ -93,7 +101,8 @@
     "Data type input": "string",
     "OUTPUT FIELD": "data.summary.alerts[].description",
     "Data type output": "string",
-    "CÁCH MAP": "out = summarize_allergy_evidence(in) // giữ cả nguồn mâu thuẫn",
+    "CÁCH MAP": "out = AI_summarize(in)",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
     "Have AI": "Yes",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.2\nNguồn gồm history.allergy và prescriptions[].allergyOnPrescription trong phạm vi payload; scopeNote phải nêu rõ phạm vi tổng hợp.\nNếu các lượt hoặc hai nguồn ghi khác nhau, alerts trả cả hai nội dung, đặt conflict=true và không tự chọn nguồn đúng.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.8\nGộp chung toàn bộ chuyên khoa, hiển thị một lần. Ghi rõ khoa và ngày ghi nhận. Nếu hai khoa ghi khác nhau thì nêu cả hai và đánh dấu mâu thuẫn.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n          \"description\": \"Nổi mẩn đỏ, ghi nhận ngày 07/02/2026.\","
@@ -104,8 +113,9 @@
     "Data type input": "string",
     "OUTPUT FIELD": "data.summary.alerts[].identifiedDate",
     "Data type output": "string (date hoặc rỗng)",
-    "CÁCH MAP": "out = extract_explicit_identified_date(in) or \"\" // không dùng visit_date thay thế",
-    "Have AI": "",
+    "CÁCH MAP": "out = AI_summarize(in)",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
+    "Have AI": "Yes",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.2\nidentifiedDate chỉ điền khi nguồn có ngày ghi nhận; không dùng visitDate thay cho ngày phát hiện nếu nguồn không xác nhận."
   },
@@ -115,8 +125,9 @@
     "Data type input": "string",
     "OUTPUT FIELD": "data.summary.alerts[].conflict",
     "Data type output": "boolean",
-    "CÁCH MAP": "out = has_allergy_or_conflict(in)\ntrue khi các nguồn/lượt ghi nội dung dị ứng mâu thuẫn; giữ đủ nội dung; không có mâu thuẫn thì false.",
-    "Have AI": "",
+    "CÁCH MAP": "out = AI_summarize(in)",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
+    "Have AI": "Yes",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.2\nNếu các lượt hoặc hai nguồn ghi khác nhau, alerts trả cả hai nội dung, đặt conflict=true và không tự chọn nguồn đúng.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n          \"conflict\": false,"
   },
@@ -126,8 +137,9 @@
     "Data type input": "",
     "OUTPUT FIELD": "data.summary.alerts[].scopeNote",
     "Data type output": "string",
-    "CÁCH MAP": "Nêu phạm vi hồ sơ/chuyên khoa/lượt thực sự được tổng hợp.",
-    "Have AI": "Không chắc chắn",
+    "CÁCH MAP": "out = AI_summarize(in)",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
+    "Have AI": "Yes",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.2\nNguồn gồm history.allergy và prescriptions[].allergyOnPrescription trong phạm vi payload; scopeNote phải nêu rõ phạm vi tổng hợp.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n          \"scopeNote\": \"Chỉ dựa trên phiếu trong phạm vi tổng hợp\""
   },
@@ -138,6 +150,7 @@
     "OUTPUT FIELD": "data.summary.sections[].order",
     "Data type output": "number (integer)",
     "CÁCH MAP": "4 section có order=1,2,3,4.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: Theo schema\n2. Xử lý:\nLuôn tạo 4 section.\nGán order lần lượt là 1, 2, 3 và 4.\n3. Ghi kết quả vào: data.summary.sections[].order",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\nPayload dưới đây là template cấu trúc response đã chốt. Giá trị chỉ để minh họa và không phải expected output của input tại mục 2.5. Không bổ sung field ngoài contract.\n          \"order\": 1,\n          \"title\": \"Tiền sử nền\",\n          \"order\": 2,\n          \"title\": \"Thuốc đang sử dụng\",\n          \"order\": 3,\n          \"title\": \"Tình trạng bệnh nhân\",\n          \"order\": 4,\n          \"title\": \"Việc cần theo dõi tiếp\","
@@ -149,29 +162,32 @@
     "OUTPUT FIELD": "data.summary.sections[].title",
     "Data type output": "string",
     "CÁCH MAP": "out = {1: \"Tiền sử nền\", 2: \"Thuốc đang sử dụng\", 3: \"Tình trạng bệnh nhân\", 4: \"Việc cần theo dõi tiếp\"}[section_order]",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: Theo schema\n2. Xử lý:\nDựa vào order để đặt title:\n1 = Tiền sử nền\n2 = Thuốc đang sử dụng\n3 = Tình trạng bệnh nhân\n4 = Việc cần theo dõi tiếp.\n3. Ghi kết quả vào: data.summary.sections[].title",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\nPayload dưới đây là template cấu trúc response đã chốt. Giá trị chỉ để minh họa và không phải expected output của input tại mục 2.5. Không bổ sung field ngoài contract.\n          \"order\": 1,\n          \"title\": \"Tiền sử nền\",\n          \"order\": 2,\n          \"title\": \"Thuốc đang sử dụng\",\n          \"order\": 3,\n          \"title\": \"Tình trạng bệnh nhân\",\n          \"order\": 4,\n          \"title\": \"Việc cần theo dõi tiếp\","
   },
   {
     "No.": 15,
-    "INPUT FIELD": "visits[].history.past_medical_history\nvisits[].history.medical_history\ndiagnosis.diagnosis_primary\ndiagnosis.diagnosis_comorbidities",
+    "INPUT FIELD": "visits[].history.past_medical_history\nvisits[].history.medical_history\nvisits[].diagnosis.diagnosis_primary\nvisits[].diagnosis.diagnosis_comorbidities\nvisits[].diagnosis.diagnosis_from_referring_facility\nvisits[].prescriptions[].diagnosis_on_prescription",
     "Data type input": "string",
     "OUTPUT FIELD": "data.summary.sections[order=1].items[].content",
     "Data type output": "string",
-    "CÁCH MAP": "out = item.content for item in dedupe_preserving_meaning(extract_past_history(in))\n\nTổng hợp tiền sử bản thân từ toàn bộ lượt, bỏ trùng nhưng giữ khác biệt có ý nghĩa; phân biệt tiền sử với bệnh sử hiện tại.",
+    "CÁCH MAP": "out = AI_summarize(in)",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
     "Have AI": "Yes",
     "Comment": "visits[].history.medical_history\nCó được trích xuất dữ liệu tại Tiền sử nền",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.3\n4.3. Tiền sử nền\nTổng hợp từ toàn bộ visits[] trong phạm vi, không chỉ lượt gần nhất; khử trùng lặp nhưng không làm mất khác biệt có ý nghĩa.\nitems[].since chỉ điền mốc tháng/năm khi nguồn ghi rõ; không có mốc thì trả chuỗi rỗng.\nobstetricHistory và menstrualHistory lấy đúng từ history của phiếu Sản; không suy ra từ mã chẩn đoán.\nfamilyHistory trả riêng, không trộn vào items của tiền sử bản thân.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.9 — Tiền sử nền\nTừng bệnh nền kèm mốc tháng/năm; tiền sử gia đình để riêng; *tiền sử sản khoa và kinh nguyệt (nếu có, hiển thị cho mọi khoa)\nhistory.pastMedicalHistory; familyHistory; *obstetricHistory; *menstrualHistory\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.1 — quy tắc dành cho one-liner\nBệnh nền/tiền sử chính: lấy từ history.pastMedicalHistory và chẩn đoán có ý nghĩa lâm sàng trong phạm vi. Mốc thời gian chỉ ghi khi nguồn có; không lấy ngày xuất hiện đầu tiên để thay cho ngày chẩn đoán.\n\nGhi chú đối chiếu (không phải trích dẫn PRD): Mục 4.9 nêu pastMedicalHistory làm nguồn tiền sử nền; medicalHistory là bệnh sử. Quy tắc sử dụng chẩn đoán ở mục 4.1 áp dụng cho one-liner, không mặc nhiên cho phép đưa mọi chẩn đoán/bệnh sử vào items[].content."
   },
   {
     "No.": 16,
-    "INPUT FIELD": "visits[].history.past_medical_history",
+    "INPUT FIELD": "visits[].history.past_medical_history\nvisits[].history.medical_history (bổ sung)\nvisits[].diagnosis.diagnosis_primary (bổ sung)\nvisits[].diagnosis.diagnosis_comorbidities (bổ sung)",
     "Data type input": "string",
     "OUTPUT FIELD": "data.summary.sections[order=1].items[].since",
     "Data type output": "string",
     "CÁCH MAP": "Mốc tháng/năm khi nguồn ghi rõ; không có mốc thì trả chuỗi rỗng.",
-    "Have AI": "",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
+    "Have AI": "Yes",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.3\nitems[].since chỉ điền mốc tháng/năm khi nguồn ghi rõ; không có mốc thì trả chuỗi rỗng.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n              \"since\": \"2019\"\n              \"since\": \"01/2026\""
   },
@@ -182,7 +198,8 @@
     "OUTPUT FIELD": "data.summary.sections[order=1].familyHistory[]",
     "Data type output": "array<string>",
     "CÁCH MAP": "Tổng hợp toàn bộ lượt, tách ý/bỏ trùng, giữ riêng tiền sử gia đình.",
-    "Have AI": "",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
+    "Have AI": "Yes",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.3\nTổng hợp từ toàn bộ visits[] trong phạm vi, không chỉ lượt gần nhất; khử trùng lặp nhưng không làm mất khác biệt có ý nghĩa.\nfamilyHistory trả riêng, không trộn vào items của tiền sử bản thân.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.9\nTừng bệnh nền kèm mốc tháng/năm; tiền sử gia đình để riêng; *tiền sử sản khoa và kinh nguyệt (nếu có, hiển thị cho mọi khoa)\nhistory.pastMedicalHistory; familyHistory; *obstetricHistory; *menstrualHistory"
   },
@@ -193,6 +210,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=1].obstetricHistory",
     "Data type output": "string",
     "CÁCH MAP": "Chỉ lấy history của phiếu Sản; tổng hợp các ghi nhận có căn cứ, thiếu nguồn phù hợp trả \"\".",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
     "Have AI": "Yes",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.3\nTổng hợp từ toàn bộ visits[] trong phạm vi, không chỉ lượt gần nhất; khử trùng lặp nhưng không làm mất khác biệt có ý nghĩa.\nobstetricHistory và menstrualHistory lấy đúng từ history của phiếu Sản; không suy ra từ mã chẩn đoán.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.8\nGộp chung, mỗi bệnh nền hiển thị một lần dù được ghi ở nhiều khoa. Trường đặc thù của khoa Sản (tiền sử sản khoa, kinh nguyệt) VẪN hiển thị cho bác sĩ mọi chuyên khoa vì ảnh hưởng chỉ định điều trị."
@@ -204,6 +222,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=1].menstrualHistory",
     "Data type output": "string",
     "CÁCH MAP": "Chỉ lấy history của phiếu Sản; tổng hợp các ghi nhận có căn cứ, thiếu nguồn phù hợp trả \"\".",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
     "Have AI": "Yes",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.3\nTổng hợp từ toàn bộ visits[] trong phạm vi, không chỉ lượt gần nhất; khử trùng lặp nhưng không làm mất khác biệt có ý nghĩa.\nobstetricHistory và menstrualHistory lấy đúng từ history của phiếu Sản; không suy ra từ mã chẩn đoán.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.8\nGộp chung, mỗi bệnh nền hiển thị một lần dù được ghi ở nhiều khoa. Trường đặc thù của khoa Sản (tiền sử sản khoa, kinh nguyệt) VẪN hiển thị cho bác sĩ mọi chuyên khoa vì ảnh hưởng chỉ định điều trị."
@@ -215,7 +234,8 @@
     "OUTPUT FIELD": "data.summary.sections[order=2].byPrescription[].name",
     "Data type output": "string",
     "CÁCH MAP": "out = in\n//Giữ tên và hàm lượng theo nguồn. Chọn đơn kê gần nhất kể cả hết hạn + thuốc của các đơn khác còn hạn; còn hạn trước, rồi prescribed_date giảm dần.",
-    "Have AI": "Yes",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].prescriptions[].items[].name\n2. Xử lý:\nChọn đơn thuốc mới nhất, kể cả khi đơn đã hết hạn.\nBổ sung các thuốc còn hạn từ những đơn cũ hơn.\nBỏ thuốc bị trùng và xếp thuốc còn hạn lên trước, sau đó xếp theo ngày kê giảm dần.\nVới mỗi thuốc được chọn, lấy nguyên item.name.\n3. Ghi kết quả vào: data.summary.sections[order=2].byPrescription[].name",
+    "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 2.4\nDanh sách thuốc: name (tên và hàm lượng), dosageInstruction (liều và cách dùng, nguyên văn), route, quantity, duration, note\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.4\nResponse gồm đúng hai mảng byPrescription và selfReported; không bổ sung field ngoài contract.\nbyPrescription: gồm thuốc của đơn kê gần nhất và thuốc thuộc các đơn khác còn thời hạn. Đơn gần nhất vẫn được trả khi đã hết hạn để giữ mốc kê đơn gần nhất.\nField đầu ra: name, dosage, frequency, prescribedDate, prescriptionCode, specialty và durationEndDate. dosage và frequency chỉ tách khi dosageInstruction đủ rõ; không tách được thì dùng chuỗi rỗng.\nSắp xếp: thuốc còn hạn trước; thuốc của đơn gần nhất đã hết hạn sau; trong cùng nhóm sắp theo prescribedDate giảm dần.\nNguồn dữ liệu: chỉ lấy từ prescriptions[] và history.currentMedications[]. Không trích thuốc từ bệnh sử, kế hoạch điều trị hoặc lời dặn để điền hai mảng này."
   },
@@ -226,6 +246,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=2].byPrescription[].dosage",
     "Data type output": "string",
     "CÁCH MAP": "Tách liều từ chỉ dẫn khi đủ rõ; không tách được trả \"\".",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: cần xác nhận giữa items[].name và items[].dosage_instruction\n2. Xử lý:\nCẦN DEV XÁC NHẬN: cột Input field của Excel ghi items[].name, nhưng CÁCH MAP yêu cầu tách liều từ chỉ dẫn.\nNếu mục tiêu là tách liều dùng thì nguồn hợp lý là items[].dosage_instruction.\n3. Ghi kết quả vào: data.summary.sections[order=2].byPrescription[].dosage",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.4\nField đầu ra: name, dosage, frequency, prescribedDate, prescriptionCode, specialty và durationEndDate. dosage và frequency chỉ tách khi dosageInstruction đủ rõ; không tách được thì dùng chuỗi rỗng.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 2.4\nDanh sách thuốc: name (tên và hàm lượng), dosageInstruction (liều và cách dùng, nguyên văn), route, quantity, duration, note"
@@ -237,6 +258,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=2].byPrescription[].frequency",
     "Data type output": "string",
     "CÁCH MAP": "out = extract_frequency(in) if frequency_is_clear(in) else \"\"\nTách tần suất/cách dùng có căn cứ; không rõ trả \"\".",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].prescriptions[].items[].dosage_instruction\n2. Xử lý:\nĐọc dosage_instruction của từng thuốc để tách tần suất hoặc cách dùng.\nNếu thông tin không rõ thì trả chuỗi rỗng.\n3. Ghi kết quả vào: data.summary.sections[order=2].byPrescription[].frequency",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.4\nField đầu ra: name, dosage, frequency, prescribedDate, prescriptionCode, specialty và durationEndDate. dosage và frequency chỉ tách khi dosageInstruction đủ rõ; không tách được thì dùng chuỗi rỗng.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 2.4\nDanh sách thuốc: name (tên và hàm lượng), dosageInstruction (liều và cách dùng, nguyên văn), route, quantity, duration, note"
@@ -248,6 +270,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=2].byPrescription[].quantity",
     "Data type output": "string",
     "CÁCH MAP": "Trích xuất trực tiếp giá trị số lượng thuốc từ mục đơn thuốc (prescriptions.items) của lượt khám gần nhất (hoặc lượt khám tương ứng) đưa vào phần tổng hợp thuốc.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].prescriptions[].items[].quantity\n2. Xử lý:\nLấy quantity của từng thuốc được chọn.\nNếu thuốc không có số lượng thì trả chuỗi rỗng.\n3. Ghi kết quả vào: data.summary.sections[order=2].byPrescription[].quantity",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 2.4 — input\nDanh sách thuốc: name (tên và hàm lượng), dosageInstruction (liều và cách dùng, nguyên văn), route, quantity, duration, note\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.4 — output\nField đầu ra: name, dosage, frequency, prescribedDate, prescriptionCode, specialty và durationEndDate. dosage và frequency chỉ tách khi dosageInstruction đủ rõ; không tách được thì dùng chuỗi rỗng.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5\nPayload dưới đây là template cấu trúc response đã chốt. Giá trị chỉ để minh họa và không phải expected output của input tại mục 2.5. Không bổ sung field ngoài contract.\n\nGhi chú đối chiếu (không phải trích dẫn PRD): quantity có trong input nhưng không có trong byPrescription của response đã chốt. Mapping trực tiếp sang byPrescription[].quantity không được contract này quy định."
@@ -259,6 +282,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=2].byPrescription[].prescribedDate",
     "Data type output": "string (date)",
     "CÁCH MAP": "out = format_date(in, \"YYYY-MM-DD\")\n// Lấy ngày kê của đúng đơn, định dạng YYYY-MM-DD theo template response.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].prescriptions[].prescribed_date\n2. Xử lý:\nLấy prescribed_date của đúng đơn thuốc.\nChuyển ngày về định dạng YYYY-MM-DD.\nNếu không đọc được ngày thì trả chuỗi rỗng.\n3. Ghi kết quả vào: data.summary.sections[order=2].byPrescription[].prescribedDate",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 2.4\nprescribedDate\nNgày giờ kê đơn\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.8\nbyPrescription giữ specialty và prescribedDate của từng đơn; selfReported là danh sách riêng. Không tự gộp hoạt chất hoặc đối chiếu hai nguồn.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n              \"prescribedDate\": \"2026-03-21\",\n\nGhi chú đối chiếu (không phải trích dẫn PRD): Template minh họa định dạng YYYY-MM-DD; không có mô tả riêng về xử lý múi giờ hoặc giờ kê đơn."
@@ -270,6 +294,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=2].byPrescription[].prescriptionCode",
     "Data type output": "string",
     "CÁCH MAP": "out = in",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].prescriptions[].prescription_code\n2. Xử lý:\nLấy nguyên prescription_code của đúng đơn thuốc. Nếu không có thì trả chuỗi rỗng.\n3. Ghi kết quả vào: data.summary.sections[order=2].byPrescription[].prescriptionCode",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 2.4\nprescriptionCode\nMã đơn thuốc (mã HIS)\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.4\nField đầu ra: name, dosage, frequency, prescribedDate, prescriptionCode, specialty và durationEndDate. dosage và frequency chỉ tách khi dosageInstruction đủ rõ; không tách được thì dùng chuỗi rỗng.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n              \"prescriptionCode\": \"8114091\","
@@ -281,17 +306,19 @@
     "OUTPUT FIELD": "data.summary.sections[order=2].byPrescription[].specialty",
     "Data type output": "string",
     "CÁCH MAP": "out = in\n//Giữ specialty ghi trên đơn, không thay bằng khoa của visit.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].prescriptions[].specialty\n2. Xử lý:\nLấy specialty ghi trên đúng đơn thuốc, không thay bằng khoa của lượt khám. Nếu không có thì trả chuỗi rỗng.\n3. Ghi kết quả vào: data.summary.sections[order=2].byPrescription[].specialty",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.4\nspecialty: lấy từ prescriptions[].specialty, không thay bằng specialty của lượt khám.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.8\nbyPrescription giữ specialty và prescribedDate của từng đơn; selfReported là danh sách riêng. Không tự gộp hoạt chất hoặc đối chiếu hai nguồn."
   },
   {
     "No.": 27,
-    "INPUT FIELD": "visits[].prescriptions[].prescribed_date; visits[].prescriptions[].items[].duration",
+    "INPUT FIELD": "visits[].prescriptions[].prescribed_date; \nvisits[].prescriptions[].items[].duration (hiện không dùng)\nvisits[].prescriptions[].items[].stop_date (bổ sung)",
     "Data type input": "string; string",
     "OUTPUT FIELD": "data.summary.sections[order=2].byPrescription[].durationEndDate",
     "Data type output": "string (date)",
-    "CÁCH MAP": "prescribedDate + số ngày duration nếu ngày/số ngày đọc được; thiếu trả \"\", không ước lượng.",
+    "CÁCH MAP": "data.summary.sections[order=2].byPrescription[].durationEndDate = visits[].prescriptions[].items[].stop_date",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].prescriptions[].items[].stop_date\n2. Xử lý:\nTheo xác nhận mới của dev, lấy trực tiếp stop_date làm durationEndDate; không tính từ duration.\nLưu ý: phần mô tả PRD cũ nói tính từ prescribedDate + duration, vì vậy ở đây ưu tiên xác nhận dev.\nNếu không có stop_date thì trả chuỗi rỗng.\n3. Ghi kết quả vào: data.summary.sections[order=2].byPrescription[].durationEndDate",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.4\ndurationEndDate: tính từ prescribedDate và duration khi duration có số ngày rõ ràng; không đủ dữ liệu thì trả chuỗi rỗng, không ước lượng.\n\nGhi chú đối chiếu (không phải trích dẫn PRD): PRD chưa nêu quy ước tính ngày kết thúc có bao gồm ngày kê đơn hay không."
@@ -303,6 +330,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=2].selfReported[].name",
     "Data type output": "string",
     "CÁCH MAP": "out = in.name\n// Lấy đúng trường thuốc tự khai, không trộn đơn kê; không biến medication_status=false thành thiếu dữ liệu.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].history.current_medications[].name; visits[].history.medication_status\n2. Xử lý:\nNếu medication_status = true thì tạo danh sách thuốc tự khai và lấy name của từng thuốc.\nNếu medication_status không phải true thì trả selfReported = [].\n3. Ghi kết quả vào: data.summary.sections[order=2].selfReported[].name",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.4\nselfReported: lấy từ history.currentMedications[]; trả name, dosage, route và askedDate. askedDate là visitDate của phiếu ghi nhận. lastDoseDate không có field tương ứng trong response và không được tự gộp vào field khác.\nNguồn dữ liệu: chỉ lấy từ prescriptions[] và history.currentMedications[]. Không trích thuốc từ bệnh sử, kế hoạch điều trị hoặc lời dặn để điền hai mảng này.\nKhông suy diễn: không tự kết luận ngừng thuốc, trùng hoạt chất, chống chỉ định hoặc chênh lệch giữa hai nguồn.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R9\nField không có dữ liệu vẫn phải xuất hiện và dùng giá trị rỗng đúng kiểu. Không biến chuỗi/mảng rỗng thành kết luận 'không có'. medicationStatus=false là giá trị boolean có nghĩa theo contract, không phải field bị thiếu."
@@ -314,6 +342,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=2].selfReported[].dosage",
     "Data type output": "string",
     "CÁCH MAP": "out = in.dosage\n//Lấy đúng trường thuốc tự khai, không trộn đơn kê; không biến medication_status=false thành thiếu dữ liệu.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].history.current_medications[].dosage; visits[].history.medication_status\n2. Xử lý:\nNếu medication_status = true thì lấy dosage của từng thuốc tự khai.\nNếu medication_status không phải true thì trả selfReported = [].\n3. Ghi kết quả vào: data.summary.sections[order=2].selfReported[].dosage",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.4\nselfReported: lấy từ history.currentMedications[]; trả name, dosage, route và askedDate. askedDate là visitDate của phiếu ghi nhận. lastDoseDate không có field tương ứng trong response và không được tự gộp vào field khác.\nNguồn dữ liệu: chỉ lấy từ prescriptions[] và history.currentMedications[]. Không trích thuốc từ bệnh sử, kế hoạch điều trị hoặc lời dặn để điền hai mảng này.\nKhông suy diễn: không tự kết luận ngừng thuốc, trùng hoạt chất, chống chỉ định hoặc chênh lệch giữa hai nguồn.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R9\nField không có dữ liệu vẫn phải xuất hiện và dùng giá trị rỗng đúng kiểu. Không biến chuỗi/mảng rỗng thành kết luận 'không có'. medicationStatus=false là giá trị boolean có nghĩa theo contract, không phải field bị thiếu."
@@ -325,6 +354,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=2].selfReported[].route",
     "Data type output": "string",
     "CÁCH MAP": "out = in.route\n//Lấy đúng trường thuốc tự khai, không trộn đơn kê; không biến medication_status=false thành thiếu dữ liệu.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].history.current_medications[].route; visits[].history.medication_status\n2. Xử lý:\nNếu medication_status = true thì lấy route của từng thuốc tự khai.\nNếu medication_status không phải true thì trả selfReported = [].\n3. Ghi kết quả vào: data.summary.sections[order=2].selfReported[].route",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.4\nselfReported: lấy từ history.currentMedications[]; trả name, dosage, route và askedDate. askedDate là visitDate của phiếu ghi nhận. lastDoseDate không có field tương ứng trong response và không được tự gộp vào field khác.\nNguồn dữ liệu: chỉ lấy từ prescriptions[] và history.currentMedications[]. Không trích thuốc từ bệnh sử, kế hoạch điều trị hoặc lời dặn để điền hai mảng này.\nKhông suy diễn: không tự kết luận ngừng thuốc, trùng hoạt chất, chống chỉ định hoặc chênh lệch giữa hai nguồn.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R9\nField không có dữ liệu vẫn phải xuất hiện và dùng giá trị rỗng đúng kiểu. Không biến chuỗi/mảng rỗng thành kết luận 'không có'. medicationStatus=false là giá trị boolean có nghĩa theo contract, không phải field bị thiếu."
@@ -336,18 +366,20 @@
     "OUTPUT FIELD": "data.summary.sections[order=2].selfReported[].askedDate",
     "Data type output": "string (date)",
     "CÁCH MAP": "out = visit.visit_date\n// Ngày khám của chính phiếu ghi nhận thuốc tự khai.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].visit_date\n2. Xử lý:\nVới mỗi thuốc tự khai, lấy visit_date của chính lượt ghi nhận thuốc làm askedDate.\nĐịnh dạng ngày thành YYYY-MM-DD; không có ngày thì trả chuỗi rỗng.\n3. Ghi kết quả vào: data.summary.sections[order=2].selfReported[].askedDate",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.4\nselfReported: lấy từ history.currentMedications[]; trả name, dosage, route và askedDate. askedDate là visitDate của phiếu ghi nhận. lastDoseDate không có field tương ứng trong response và không được tự gộp vào field khác."
   },
   {
     "No.": 32,
-    "INPUT FIELD": "visits[]; visits[].prescriptions[].prescribed_date; visits[].prescriptions[].items[].duration",
+    "INPUT FIELD": "visits[]; visits[].prescriptions[].prescribed_date; \nvisits[].prescriptions[].items[].duration (hiện không dùng)\nvisits[].prescriptions[].items[].stop_date (bổ sung)",
     "Data type input": "array<object>; string",
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[]",
     "Data type output": "array<object>",
     "CÁCH MAP": "//Lượt mới nhất toàn bộ visits + lượt có thuốc còn hạn tại thời điểm tạo summary; khử trùng theo lượt, ngày giảm dần; không tự lấy lượt mới nhất của mỗi khoa.",
-    "Have AI": "Không chắc",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[]; visits[].prescriptions[].prescribed_date; \nvisits[].prescriptions[].items[].duration (hiện không dùng)\nvisits[].prescriptions[].items[].stop_date (bổ sung)\n2. Xử lý:\nBước 1: Chọn lượt khám có visit_date mới nhất.\nBước 2: Chọn thêm các lượt có ít nhất một thuốc còn hạn theo stop_date tại thời điểm tạo summary.\nBước 3: Bỏ lượt bị trùng và sắp xếp các lượt theo ngày giảm dần.\n3. Ghi kết quả vào: data.summary.sections[order=3].latestBySpecialty[]",
+    "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.1\nLượt khám có visitDate gần nhất trong toàn bộ visits[] luôn được đưa vào latestBySpecialty.\nBổ sung các lượt có ít nhất một thuốc trong prescriptions[] còn hiệu lực tại thời điểm tạo summary; nếu trùng lượt gần nhất thì chỉ giữ một khối . Không đặt giới hạn cứng số khối ngoài giới hạn tối đa 20 phiếu đầu vào.\nNếu không xác định được durationEndDate thì không chọn thêm lượt cũ theo tiêu chí đơn còn hiệu lực; thuốc vẫn xuất hiện trong byPrescription theo quy tắc mục 4.4 và lượt khám vẫn có trong timeline.\nMỗi khối chỉ dùng dữ liệu của chính lượt được chọn; không lấy dữ liệu của lượt khác để lấp field trống.\nCác khối sắp xếp theo visitDate giảm dần. visitDate và specialty lấy trực tiếp từ lượt được chọn.\nMọi lượt khám hợp lệ trong phạm vi, kể cả lượt không được chọn vào latestBySpecialty, vẫn phải xuất hiện trong timeline."
   },
@@ -358,6 +390,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].visitDate",
     "Data type output": "string",
     "CÁCH MAP": "out = in",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].visit_date\n2. Xử lý:\nVới mỗi lượt đã chọn ở No.32, lấy visit_date làm visitDate. Nếu không có ngày thì trả chuỗi rỗng.\n3. Ghi kết quả vào: data.summary.sections[order=3].latestBySpecialty[].visitDate",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.1\nMỗi khối chỉ dùng dữ liệu của chính lượt được chọn; không lấy dữ liệu của lượt khác để lấp field trống.\nCác khối sắp xếp theo visitDate giảm dần. visitDate và specialty lấy trực tiếp từ lượt được chọn."
@@ -369,6 +402,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].specialty",
     "Data type output": "string",
     "CÁCH MAP": "out = in",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].specialty\n2. Xử lý:\nVới mỗi lượt đã chọn ở No.32, lấy specialty. Nếu không có khoa thì trả chuỗi rỗng.\n3. Ghi kết quả vào: data.summary.sections[order=3].latestBySpecialty[].specialty",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.1\nMỗi khối chỉ dùng dữ liệu của chính lượt được chọn; không lấy dữ liệu của lượt khác để lấp field trống.\nCác khối sắp xếp theo visitDate giảm dần. visitDate và specialty lấy trực tiếp từ lượt được chọn."
@@ -379,7 +413,8 @@
     "Data type input": "number",
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].vitalSigns.pulse",
     "Data type output": "number",
-    "CÁCH MAP": "out = to_number(get_latest_visit(visits).vitals.pulse)",
+    "CÁCH MAP": "out = to_number(selected_visit.vitals.pulse)\n// selected_visit là từng lượt đã được chọn theo điều kiện No.32.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].vitals.pulse\n2. Xử lý:\nLấy pulse của chính lượt đang được map và chuyển sang số. Nếu trống hoặc không chuyển được thì trả null.\n3. Ghi kết quả vào: data.summary.sections[order=3].latestBySpecialty[].vitalSigns.pulse",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.1\nMỗi khối chỉ dùng dữ liệu của chính lượt được chọn; không lấy dữ liệu của lượt khác để lấp field trống.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\nvitalSigns: chỉ gồm pulse, bloodPressure, spo2, respiratoryRate, weight và height của cùng lượt; weight map từ weightKg, height map từ heightCm.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R4\nSinh hiệu phải map đúng nhãn. latestBySpecialty[].vitalSigns chỉ trả các field đã chốt: pulse, bloodPressure, spo2, respiratoryRate, weight và height. temperature và bmi không tạo field mới trong khối này. Field thiếu hoặc sai kiểu dùng giá trị rỗng đúng contract; không đổi nhãn hoặc gán sang chỉ số khác.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n                \"pulse\": 76,\n\nGhi chú đối chiếu (không phải trích dẫn PRD): Các giá trị phải lấy từ chính lượt của mỗi khối được chọn, không luôn lấy một lượt gần nhất toàn cục."
@@ -390,7 +425,8 @@
     "Data type input": "string",
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].vitalSigns.bloodPressure",
     "Data type output": "string",
-    "CÁCH MAP": "out = to_number(get_latest_visit(visits).vitals.blood_pressure)\nHệ thống lấy từ lượt khám gần nhất",
+    "CÁCH MAP": "out = selected_visit.vitals.blood_pressure\n// Giữ nguyên chuỗi huyết áp, ví dụ \"120/80\"; không dùng to_number().",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].vitals.blood_pressure\n2. Xử lý:\nLấy nguyên blood_pressure của chính lượt đang được map, ví dụ 120/80. Không chuyển huyết áp sang số; nếu không có thì trả chuỗi rỗng.\n3. Ghi kết quả vào: data.summary.sections[order=3].latestBySpecialty[].vitalSigns.bloodPressure",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.1\nMỗi khối chỉ dùng dữ liệu của chính lượt được chọn; không lấy dữ liệu của lượt khác để lấp field trống.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\nvitalSigns: chỉ gồm pulse, bloodPressure, spo2, respiratoryRate, weight và height của cùng lượt; weight map từ weightKg, height map từ heightCm.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R4\nSinh hiệu phải map đúng nhãn. latestBySpecialty[].vitalSigns chỉ trả các field đã chốt: pulse, bloodPressure, spo2, respiratoryRate, weight và height. temperature và bmi không tạo field mới trong khối này. Field thiếu hoặc sai kiểu dùng giá trị rỗng đúng contract; không đổi nhãn hoặc gán sang chỉ số khác.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n                \"bloodPressure\": \"128/82\",\n\nGhi chú đối chiếu (không phải trích dẫn PRD): Các giá trị phải lấy từ chính lượt của mỗi khối được chọn, không luôn lấy một lượt gần nhất toàn cục. bloodPressure trong template là chuỗi \"128/82\"; to_number không phù hợp cấu trúc này."
@@ -401,7 +437,8 @@
     "Data type input": "number",
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].vitalSigns.spo2",
     "Data type output": "number",
-    "CÁCH MAP": "out = to_number(get_latest_visit(visits).vitals.spo2)\nHệ thống lấy từ lượt khám gần nhất",
+    "CÁCH MAP": "out = to_number(selected_visit.vitals.spo2)\n// selected_visit là từng lượt đã được chọn theo điều kiện No.32.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].vitals.spo2\n2. Xử lý:\nLấy spo2 của chính lượt đang được map và chuyển sang số. Nếu trống hoặc không chuyển được thì trả null.\n3. Ghi kết quả vào: data.summary.sections[order=3].latestBySpecialty[].vitalSigns.spo2",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.1\nMỗi khối chỉ dùng dữ liệu của chính lượt được chọn; không lấy dữ liệu của lượt khác để lấp field trống.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\nvitalSigns: chỉ gồm pulse, bloodPressure, spo2, respiratoryRate, weight và height của cùng lượt; weight map từ weightKg, height map từ heightCm.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R4\nSinh hiệu phải map đúng nhãn. latestBySpecialty[].vitalSigns chỉ trả các field đã chốt: pulse, bloodPressure, spo2, respiratoryRate, weight và height. temperature và bmi không tạo field mới trong khối này. Field thiếu hoặc sai kiểu dùng giá trị rỗng đúng contract; không đổi nhãn hoặc gán sang chỉ số khác.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n                \"spo2\": 98,\n\nGhi chú đối chiếu (không phải trích dẫn PRD): Các giá trị phải lấy từ chính lượt của mỗi khối được chọn, không luôn lấy một lượt gần nhất toàn cục."
@@ -412,7 +449,8 @@
     "Data type input": "number",
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].vitalSigns.respiratoryRate",
     "Data type output": "number",
-    "CÁCH MAP": "out = to_number(get_latest_visit(visits).vitals.respiratory_rate)\nHệ thống lấy từ lượt khám gần nhất",
+    "CÁCH MAP": "out = to_number(selected_visit.vitals.respiratory_rate)\n// selected_visit là từng lượt đã được chọn theo điều kiện No.32.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].vitals.respiratory_rate\n2. Xử lý:\nLấy respiratory_rate của chính lượt đang được map và chuyển sang số. Nếu trống hoặc không chuyển được thì trả null.\n3. Ghi kết quả vào: data.summary.sections[order=3].latestBySpecialty[].vitalSigns.respiratoryRate",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.1\nMỗi khối chỉ dùng dữ liệu của chính lượt được chọn; không lấy dữ liệu của lượt khác để lấp field trống.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\nvitalSigns: chỉ gồm pulse, bloodPressure, spo2, respiratoryRate, weight và height của cùng lượt; weight map từ weightKg, height map từ heightCm.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R4\nSinh hiệu phải map đúng nhãn. latestBySpecialty[].vitalSigns chỉ trả các field đã chốt: pulse, bloodPressure, spo2, respiratoryRate, weight và height. temperature và bmi không tạo field mới trong khối này. Field thiếu hoặc sai kiểu dùng giá trị rỗng đúng contract; không đổi nhãn hoặc gán sang chỉ số khác.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n                \"respiratoryRate\": 17,\n\nGhi chú đối chiếu (không phải trích dẫn PRD): Các giá trị phải lấy từ chính lượt của mỗi khối được chọn, không luôn lấy một lượt gần nhất toàn cục."
@@ -420,10 +458,11 @@
   {
     "No.": 39,
     "INPUT FIELD": "visits[].vitals.weight_kg",
-    "Data type input": "string",
+    "Data type input": "number",
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].vitalSigns.weight",
     "Data type output": "number",
-    "CÁCH MAP": "out = to_number(get_latest_visit(visits).vitals.weight_kg)\nHệ thống lấy từ lượt khám gần nhất",
+    "CÁCH MAP": "out = to_number(selected_visit.vitals.weight_kg)\n// selected_visit là từng lượt đã được chọn theo điều kiện No.32.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].vitals.weight_kg\n2. Xử lý:\nLấy weight_kg của chính lượt đang được map và chuyển sang số. Nếu trống hoặc không chuyển được thì trả null.\n3. Ghi kết quả vào: data.summary.sections[order=3].latestBySpecialty[].vitalSigns.weight",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.1\nMỗi khối chỉ dùng dữ liệu của chính lượt được chọn; không lấy dữ liệu của lượt khác để lấp field trống.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\nvitalSigns: chỉ gồm pulse, bloodPressure, spo2, respiratoryRate, weight và height của cùng lượt; weight map từ weightKg, height map từ heightCm.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R4\nSinh hiệu phải map đúng nhãn. latestBySpecialty[].vitalSigns chỉ trả các field đã chốt: pulse, bloodPressure, spo2, respiratoryRate, weight và height. temperature và bmi không tạo field mới trong khối này. Field thiếu hoặc sai kiểu dùng giá trị rỗng đúng contract; không đổi nhãn hoặc gán sang chỉ số khác.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n                \"weight\": 62,\n\nGhi chú đối chiếu (không phải trích dẫn PRD): Các giá trị phải lấy từ chính lượt của mỗi khối được chọn, không luôn lấy một lượt gần nhất toàn cục."
@@ -431,10 +470,11 @@
   {
     "No.": 40,
     "INPUT FIELD": "visits[].vitals.height_cm",
-    "Data type input": "string",
+    "Data type input": "number",
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].vitalSigns.height",
     "Data type output": "number",
-    "CÁCH MAP": "out = to_number(get_latest_visit(visits).vitals.height_cm)\nHệ thống lấy từ lượt khám gần nhất",
+    "CÁCH MAP": "out = to_number(selected_visit.vitals.height_cm)\n// selected_visit là từng lượt đã được chọn theo điều kiện No.32.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].vitals.height_cm\n2. Xử lý:\nLấy height_cm của chính lượt đang được map và chuyển sang số. Nếu trống hoặc không chuyển được thì trả null.\n3. Ghi kết quả vào: data.summary.sections[order=3].latestBySpecialty[].vitalSigns.height",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.1\nMỗi khối chỉ dùng dữ liệu của chính lượt được chọn; không lấy dữ liệu của lượt khác để lấp field trống.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\nvitalSigns: chỉ gồm pulse, bloodPressure, spo2, respiratoryRate, weight và height của cùng lượt; weight map từ weightKg, height map từ heightCm.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R4\nSinh hiệu phải map đúng nhãn. latestBySpecialty[].vitalSigns chỉ trả các field đã chốt: pulse, bloodPressure, spo2, respiratoryRate, weight và height. temperature và bmi không tạo field mới trong khối này. Field thiếu hoặc sai kiểu dùng giá trị rỗng đúng contract; không đổi nhãn hoặc gán sang chỉ số khác.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n                \"height\": 158\n\nGhi chú đối chiếu (không phải trích dẫn PRD): Các giá trị phải lấy từ chính lượt của mỗi khối được chọn, không luôn lấy một lượt gần nhất toàn cục."
@@ -445,7 +485,8 @@
     "Data type input": "number",
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].vitalSigns.temperature",
     "Data type output": "number",
-    "CÁCH MAP": "out = to_number(get_latest_visit(visits).vitals.height_cm)\nHệ thống lấy từ lượt khám gần nhất",
+    "CÁCH MAP": "out = to_number(selected_visit.vitals.temperature)\n// Lấy đúng temperature của lượt đang được map, không lấy height_cm.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].vitals.temperature\n2. Xử lý:\nCẦN DEV/PO XÁC NHẬN: dòng Mapping tạo vitalSigns.temperature, nhưng PRD ghi temperature không có field riêng trong vitalSigns.\nTheo PRD, không tạo field vitalSigns.temperature; nếu cần giữ giá trị thì đưa temperature vào dữ liệu nguồn của timeline.details.clinical.\n3. Kết quả đề xuất theo PRD: không tạo data.summary.sections[order=3].latestBySpecialty[].vitalSigns.temperature",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\ntemperature và bmi: không có field riêng trong vitalSigns của response. Không tạo field mới; nếu cần giữ nội dung nguồn thì đưa vào timeline.details.clinical của đúng lượt.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R4\nSinh hiệu phải map đúng nhãn. latestBySpecialty[].vitalSigns chỉ trả các field đã chốt: pulse, bloodPressure, spo2, respiratoryRate, weight và height. temperature và bmi không tạo field mới trong khối này. Field thiếu hoặc sai kiểu dùng giá trị rỗng đúng contract; không đổi nhãn hoặc gán sang chỉ số khác.\n\nGhi chú đối chiếu (không phải trích dẫn PRD): Trường output ở dòng này không thuộc vitalSigns theo PRD. Công thức cột CÁCH MAP còn lấy height_cm cho temperature."
@@ -456,7 +497,8 @@
     "Data type input": "number",
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].vitalSigns.bmi",
     "Data type output": "number",
-    "CÁCH MAP": "Hệ thống lấy từ lượt khám gần nhất",
+    "CÁCH MAP": "out = to_number(selected_visit.vitals.bmi)\n// selected_visit là từng lượt đã được chọn theo điều kiện No.32.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].vitals.bmi\n2. Xử lý:\nCẦN DEV/PO XÁC NHẬN: dòng Mapping tạo vitalSigns.bmi, nhưng PRD ghi bmi không có field riêng trong vitalSigns.\nTheo PRD, không tạo field vitalSigns.bmi; nếu cần giữ giá trị thì đưa bmi vào dữ liệu nguồn của timeline.details.clinical.\n3. Kết quả đề xuất theo PRD: không tạo data.summary.sections[order=3].latestBySpecialty[].vitalSigns.bmi",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\ntemperature và bmi: không có field riêng trong vitalSigns của response. Không tạo field mới; nếu cần giữ nội dung nguồn thì đưa vào timeline.details.clinical của đúng lượt.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R4\nSinh hiệu phải map đúng nhãn. latestBySpecialty[].vitalSigns chỉ trả các field đã chốt: pulse, bloodPressure, spo2, respiratoryRate, weight và height. temperature và bmi không tạo field mới trong khối này. Field thiếu hoặc sai kiểu dùng giá trị rỗng đúng contract; không đổi nhãn hoặc gán sang chỉ số khác.\n\nGhi chú đối chiếu (không phải trích dẫn PRD): Trường output ở dòng này không thuộc vitalSigns theo PRD."
@@ -468,6 +510,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].clinicalFindings",
     "Data type output": "string",
     "CÁCH MAP": "AI Tổng hợp nội dung examination của lượt được chọn, giữ nguyên ý và không thêm nhận định lâm sàng.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
     "Have AI": "Yes",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.1\nMỗi khối chỉ dùng dữ liệu của chính lượt được chọn; không lấy dữ liệu của lượt khác để lấp field trống.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\nclinicalFindings: tổ chức lại nội dung examination của lượt được chọn, giữ nguyên ý và không thêm nhận định lâm sàng.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R2\nChống bỏ sót bằng quy trình hai bước, không chỉ bằng nhắc nhở: (a) Bước trích xuất - liệt kê toàn bộ dữ kiện của từng lượt khám theo checklist trường bắt buộc (lý do khám, tiền sử, dị ứng, thuốc, từng vị trí/triệu chứng trong khám lâm sàng, cận lâm sàng, chẩn đoán, điều trị, lời dặn); (b) Bước viết - chỉ diễn đạt lại các dữ kiện đã trích, không lược bỏ dữ kiện nào có ý nghĩa lâm sàng. Khi bác sĩ ghi nhiều vị trí hoặc triệu chứng thì nêu đủ, không chọn một bỏ một. Kiểm chứng bằng cách đối chiếu số dữ kiện trích ra với số dữ kiện xuất hiện trong bản tóm tắt."
@@ -479,7 +522,8 @@
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].specialtyFindings.obstetrics",
     "Data type output": "string",
     "CÁCH MAP": "Chỉ dùng nội dung examination của phiếu Sản; không tính tuổi thai hoặc suy đoán đã sinh; không áp dụng trả null.",
-    "Have AI": "Không chắc",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
+    "Have AI": "Yes",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\nspecialtyFindings: obstetrics chỉ lấy nội dung khám chuyên khoa Sản có trong examination; pediatrics map bốn trường đánh giá Nhi. Nhóm không áp dụng dùng null hoặc object rỗng đúng template.\nKhông điền nội dung Sản/Nhi vào specialtyFindings của chuyên khoa khác để lấp field trống.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.3\nSản: chỉ sử dụng nội dung nguồn của lượt khám; không tự tính tuổi thai hiện tại và không kết luận còn mang thai hay đã sinh.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n                \"obstetrics\": null,\n\nGhi chú đối chiếu (không phải trích dẫn PRD): PRD không định nghĩa cấu trúc chi tiết của object obstetrics khi có dữ liệu."
   },
@@ -489,7 +533,8 @@
     "Data type input": "string",
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].specialtyFindings.pediatrics.nutrition",
     "Data type output": "string",
-    "CÁCH MAP": "in = out\nPhiếu Nhi ;  Khoa khác không điền nội dung Nhi; ",
+    "CÁCH MAP": "out = selected_visit.examination.nutrition_assessment if is_pediatrics(selected_visit.specialty) else \"\"\n// Chỉ map dữ liệu Nhi của đúng lượt đang được chọn.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].examination.nutrition_assessment;\nvisits[].specialty\n2. Xử lý:\nNếu specialty của lượt đang xét là Nhi thì lấy nutrition_assessment.\nNếu không phải khoa Nhi thì trả chuỗi rỗng.\n3. Ghi kết quả vào: data.summary.sections[order=3].latestBySpecialty[].specialtyFindings.pediatrics.nutrition",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\nspecialtyFindings: obstetrics chỉ lấy nội dung khám chuyên khoa Sản có trong examination; pediatrics map bốn trường đánh giá Nhi. Nhóm không áp dụng dùng null hoặc object rỗng đúng template.\nKhông điền nội dung Sản/Nhi vào specialtyFindings của chuyên khoa khác để lấp field trống.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.3\nNhi: map nutritionAssessment, vaccinationAssessment, motorDevelopment và mentalDevelopment sang pediatrics; giữ nguyên nhận định của bác sĩ.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n                  \"nutrition\": \"\","
@@ -500,7 +545,8 @@
     "Data type input": "string",
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].specialtyFindings.pediatrics.vaccination",
     "Data type output": "string",
-    "CÁCH MAP": "in = out\nPhiếu Nhi ;  Khoa khác không điền nội dung Nhi; ",
+    "CÁCH MAP": "out = selected_visit.examination.vaccination_assessment if is_pediatrics(selected_visit.specialty) else \"\"\n// Chỉ map dữ liệu Nhi của đúng lượt đang được chọn.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].examination.vaccination_assessment; visits[].specialty\n2. Xử lý:\nNếu specialty của lượt đang xét là Nhi thì lấy vaccination_assessment.\nNếu không phải khoa Nhi thì trả chuỗi rỗng.\n3. Ghi kết quả vào: data.summary.sections[order=3].latestBySpecialty[].specialtyFindings.pediatrics.vaccination",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\nspecialtyFindings: obstetrics chỉ lấy nội dung khám chuyên khoa Sản có trong examination; pediatrics map bốn trường đánh giá Nhi. Nhóm không áp dụng dùng null hoặc object rỗng đúng template.\nKhông điền nội dung Sản/Nhi vào specialtyFindings của chuyên khoa khác để lấp field trống.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.3\nNhi: map nutritionAssessment, vaccinationAssessment, motorDevelopment và mentalDevelopment sang pediatrics; giữ nguyên nhận định của bác sĩ.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n                  \"vaccination\": \"\","
@@ -511,7 +557,8 @@
     "Data type input": "string",
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].specialtyFindings.pediatrics.motorDevelopment",
     "Data type output": "string",
-    "CÁCH MAP": "in = out\nPhiếu Nhi ;  Khoa khác không điền nội dung Nhi; ",
+    "CÁCH MAP": "out = selected_visit.examination.motor_development if is_pediatrics(selected_visit.specialty) else \"\"\n// Chỉ map dữ liệu Nhi của đúng lượt đang được chọn.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].examination.motor_development; visits[].specialty\n2. Xử lý:\nNếu specialty của lượt đang xét là Nhi thì lấy motor_development.\nNếu không phải khoa Nhi thì trả chuỗi rỗng.\n3. Ghi kết quả vào: data.summary.sections[order=3].latestBySpecialty[].specialtyFindings.pediatrics.motorDevelopment",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\nspecialtyFindings: obstetrics chỉ lấy nội dung khám chuyên khoa Sản có trong examination; pediatrics map bốn trường đánh giá Nhi. Nhóm không áp dụng dùng null hoặc object rỗng đúng template.\nKhông điền nội dung Sản/Nhi vào specialtyFindings của chuyên khoa khác để lấp field trống.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.3\nNhi: map nutritionAssessment, vaccinationAssessment, motorDevelopment và mentalDevelopment sang pediatrics; giữ nguyên nhận định của bác sĩ.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n                  \"motorDevelopment\": \"\","
@@ -522,7 +569,8 @@
     "Data type input": "string",
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].specialtyFindings.pediatrics.mentalDevelopment",
     "Data type output": "string",
-    "CÁCH MAP": "in = out\nPhiếu Nhi ;  Khoa khác không điền nội dung Nhi; ",
+    "CÁCH MAP": "out = selected_visit.examination.mental_development if is_pediatrics(selected_visit.specialty) else \"\"\n// Chỉ map dữ liệu Nhi của đúng lượt đang được chọn.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].examination.mental_development; visits[].specialty\n2. Xử lý:\nNếu specialty của lượt đang xét là Nhi thì lấy mental_development.\nNếu không phải khoa Nhi thì trả chuỗi rỗng.\n3. Ghi kết quả vào: data.summary.sections[order=3].latestBySpecialty[].specialtyFindings.pediatrics.mentalDevelopment",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\nspecialtyFindings: obstetrics chỉ lấy nội dung khám chuyên khoa Sản có trong examination; pediatrics map bốn trường đánh giá Nhi. Nhóm không áp dụng dùng null hoặc object rỗng đúng template.\nKhông điền nội dung Sản/Nhi vào specialtyFindings của chuyên khoa khác để lấp field trống.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.3\nNhi: map nutritionAssessment, vaccinationAssessment, motorDevelopment và mentalDevelopment sang pediatrics; giữ nguyên nhận định của bác sĩ.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n                  \"mentalDevelopment\": \"\""
@@ -534,7 +582,8 @@
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].abnormalResults[].name",
     "Data type output": "string",
     "CÁCH MAP": "Trích tên chỉ số được nguồn abnormal_result nêu; không có tên rõ thì \"\".",
-    "Have AI": "Không chắc",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
+    "Have AI": "Yes",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\nabnormalResults: lấy từ labs.abnormalResult. abnormal phản ánh đúng đánh dấu của nguồn; AI không tự áp ngưỡng.\nKết quả không nằm trong labs.abnormalResult không đưa vào abnormalResults; nội dung cận lâm sàng của lượt vẫn nằm trong timeline.details.paraclinical.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.4\nKhông tự suy ra bất thường từ giá trị hoặc ngưỡng tham chiếu; chỉ giữ đánh dấu bất thường có trong nguồn.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n                  \"name\": \"Hemoglobin\","
   },
@@ -545,7 +594,8 @@
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].abnormalResults[].result",
     "Data type output": "string",
     "CÁCH MAP": "Giữ nguyên kết quả/đơn vị/kết luận được nguồn đánh dấu; không lấy từ paraclinical_result để tự xác định bất thường.",
-    "Have AI": "Không chắc",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
+    "Have AI": "Yes",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\nabnormalResults: lấy từ labs.abnormalResult. abnormal phản ánh đúng đánh dấu của nguồn; AI không tự áp ngưỡng.\nKết quả không nằm trong labs.abnormalResult không đưa vào abnormalResults; nội dung cận lâm sàng của lượt vẫn nằm trong timeline.details.paraclinical.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.4\nKhông tự suy ra bất thường từ giá trị hoặc ngưỡng tham chiếu; chỉ giữ đánh dấu bất thường có trong nguồn.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n                  \"result\": \"9,8 g/dL\","
   },
@@ -556,7 +606,8 @@
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].abnormalResults[].abnormal",
     "Data type output": "boolean",
     "CÁCH MAP": "Theo đúng cờ/kết luận nguồn, không tự áp ngưỡng. Nếu không có item bất thường thì mảng []; không tạo item từ câu “Không ghi nhận bất thường”.",
-    "Have AI": "",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
+    "Have AI": "Yes",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\nabnormalResults: lấy từ labs.abnormalResult. abnormal phản ánh đúng đánh dấu của nguồn; AI không tự áp ngưỡng.\nKết quả không nằm trong labs.abnormalResult không đưa vào abnormalResults; nội dung cận lâm sàng của lượt vẫn nằm trong timeline.details.paraclinical.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.4\nKhông tự suy ra bất thường từ giá trị hoặc ngưỡng tham chiếu; chỉ giữ đánh dấu bất thường có trong nguồn.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n                  \"abnormal\": false\n\nGhi chú đối chiếu (không phải trích dẫn PRD): Giá trị trong template chỉ minh họa, không phải quy tắc cố định cho cờ abnormal."
   },
@@ -567,6 +618,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].diagnoses[].code",
     "Data type output": "string",
     "CÁCH MAP": "Khử trùng theo cặp code-name; không tự diễn giải ICD.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].diagnosis.diagnosis_primary[].code; visits[].diagnosis.diagnosis_comorbidities[].code\n2. Xử lý:\nGộp diagnosis_primary và diagnosis_comorbidities của đúng lượt khám.\nBỏ chẩn đoán trùng theo cặp code và name.\nVới mỗi chẩn đoán còn lại, lấy code; nếu thiếu code thì trả chuỗi rỗng.\n3. Ghi kết quả vào: data.summary.sections[order=3].latestBySpecialty[].diagnoses[].code",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\ndiagnoses: lấy diagnosisPrimary và diagnosisComorbidities; trả code và description, khử trùng lặp theo cặp mã - tên.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R6\nChẩn đoán: khử trùng lặp theo mã ICD và tên; không tự diễn giải mã ICD. Nếu chẩn đoán văn bản của bác sĩ chứa thông tin mà mã ICD không phản ánh thì giữ nguyên phần văn bản.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n                  \"code\": \"E11\",\n                  \"description\": \"Đái tháo đường type 2\""
@@ -577,8 +629,9 @@
     "Data type input": "string",
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].diagnoses[].description",
     "Data type output": "string",
-    "CÁCH MAP": "Lấy trực tiếp từ trường description của diagnosis_primary và diagnosis_comorbidities (hoặc name nếu không có description).",
-    "Have AI": "Yes",
+    "CÁCH MAP": "Gộp chẩn đoán chính và bệnh kèm theo của đúng lượt khám được chọn. Với mỗi chẩn đoán, lấy nguyên giá trị description; giữ đúng quan hệ với code của chính chẩn đoán đó và khử trùng lặp.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].diagnosis.diagnosis_primary[].description và visits[].diagnosis.diagnosis_comorbidities[].description\n2. Xử lý:\nChọn đúng lượt khám mới nhất của từng chuyên khoa.\nGộp danh sách chẩn đoán chính và bệnh kèm theo.\nVới mỗi chẩn đoán, lấy nguyên description và ghép với code của cùng phần tử; không tự tạo hoặc diễn giải thêm nội dung.\nKhử các chẩn đoán bị trùng.\n3. Ghi kết quả vào: data.summary.sections[order=3].latestBySpecialty[].diagnoses[].description",
+    "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\ndiagnoses: lấy diagnosisPrimary và diagnosisComorbidities; trả code và description, khử trùng lặp theo cặp mã - tên.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R6\nChẩn đoán: khử trùng lặp theo mã ICD và tên; không tự diễn giải mã ICD. Nếu chẩn đoán văn bản của bác sĩ chứa thông tin mà mã ICD không phản ánh thì giữ nguyên phần văn bản.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n                  \"code\": \"E11\",\n                  \"description\": \"Đái tháo đường type 2\""
   },
@@ -588,7 +641,8 @@
     "Data type input": "string",
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].diagnoses[].name",
     "Data type output": "string",
-    "CÁCH MAP": "KHÔNG sinh name riêng theo output contract; bảo toàn tên bệnh trong description.",
+    "CÁCH MAP": "out = in.name\n// Giữ name của đúng diagnosis_primary/diagnosis_comorbidities và đúng lượt khám.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].diagnosis.diagnosis_primary[].name và visits[].diagnosis.diagnosis_comorbidities[].name\n2. Xử lý:\nKhông tạo field name riêng trong output diagnosis.\nDùng name của nguồn để tạo hoặc bổ sung description theo đúng chẩn đoán và đúng lượt khám.\n3. Ghi kết quả vào: diagnoses[].description; không tạo diagnoses[].name",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\ndiagnoses: lấy diagnosisPrimary và diagnosisComorbidities; trả code và description, khử trùng lặp theo cặp mã - tên.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5\nPayload dưới đây là template cấu trúc response đã chốt. Giá trị chỉ để minh họa và không phải expected output của input tại mục 2.5. Không bổ sung field ngoài contract.\n                  \"code\": \"E11\",\n                  \"description\": \"Đái tháo đường type 2\"\n\nGhi chú đối chiếu (không phải trích dẫn PRD): PRD chỉ quy định code và description cho diagnoses; không có field name riêng ở output."
@@ -600,6 +654,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].treatment[]",
     "Data type output": "array<string>",
     "CÁCH MAP": "Tách/diễn đạt hướng điều trị của chính lượt; giữ đủ ý.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].plan.treatment_plan\n2. Xử lý:\nLấy treatment_plan của đúng lượt được chọn.\nTách thành các ý điều trị có nội dung và bỏ phần trống.\nNếu không có dữ liệu thì trả [].\n3. Ghi kết quả vào: data.summary.sections[order=3].latestBySpecialty[].treatment[]",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\ntreatment và advice: treatment lấy từ plan.treatmentPlan; advice lấy từ plan.doctorAdvice. Đơn thuốc được xử lý tại byPrescription và timeline.details.prescription, không dùng để tạo nhận định điều trị mới.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.1\nMỗi khối chỉ dùng dữ liệu của chính lượt được chọn; không lấy dữ liệu của lượt khác để lấp field trống."
@@ -611,6 +666,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].advice[]",
     "Data type output": "array<string>",
     "CÁCH MAP": "Tách lời dặn của đúng lượt từ doctor_advice.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].plan.doctor_advice\n2. Xử lý:\nLấy doctor_advice của đúng lượt được chọn.\nTách thành các lời dặn có nội dung và bỏ phần trống.\nNếu không có dữ liệu thì trả [].\n3. Ghi kết quả vào: data.summary.sections[order=3].latestBySpecialty[].advice[]",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\ntreatment và advice: treatment lấy từ plan.treatmentPlan; advice lấy từ plan.doctorAdvice. Đơn thuốc được xử lý tại byPrescription và timeline.details.prescription, không dùng để tạo nhận định điều trị mới.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.1\nMỗi khối chỉ dùng dữ liệu của chính lượt được chọn; không lấy dữ liệu của lượt khác để lấp field trống."
@@ -622,7 +678,8 @@
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].trends[]",
     "Data type output": "array<object>",
     "CÁCH MAP": "So sánh chỉ số có đủ 2 mốc với lượt trước cùng specialty, giữ số liệu/đơn vị; thiếu thì [].",
-    "Have AI": "Không chắc",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].specialty; visits[].visit_date; visits[].vitals; visits[].labs.paraclinical_result; visits[].labs.abnormal_result\n2. Xử lý:\nTìm lượt gần nhất trước đó có cùng specialty.\nNếu không có lượt trước thì trả trends = [].\nNếu có, chỉ so sánh các chỉ số xuất hiện ở cả hai lượt và giữ nguyên giá trị, đơn vị, ngày.\n3. Ghi kết quả vào: data.summary.sections[order=3].latestBySpecialty[].trends[]",
+    "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\ntrends: với mỗi khối, chỉ so sánh chỉ số của lượt đó với lượt trước cùng specialty khi có đủ hai mốc; trả name, from, fromDate, to và toDate.\nKhông đủ hai mốc cùng specialty thì trends=[]. Không sinh câu 'ổn định', 'cải thiện' hoặc 'xấu đi'.\nKhông so sánh chéo chuyên khoa trong trends.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template trends\n                  \"name\": \"HbA1c\",\n                  \"from\": \"8.6%\",\n                  \"fromDate\": \"2026-01-10\",\n                  \"to\": \"7.1%\",\n                  \"toDate\": \"2026-03-21\""
   },
@@ -633,7 +690,8 @@
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].trends[].name",
     "Data type output": "string",
     "CÁCH MAP": "Tên chỉ số từ nguồn có cặp so sánh, không phát minh chỉ số.",
-    "Have AI": "Không chắc",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].visit_date; visits[].specialty; visits[].vitals; visits[].labs.paraclinical_result; visits[].labs.abnormal_result\n2. Xử lý:\nVới mỗi chỉ số có dữ liệu ở cả hai lượt, lấy đúng tên chỉ số từ nguồn làm trend.name.\nKhông tự tạo tên chỉ số mới.\n3. Ghi kết quả vào: data.summary.sections[order=3].latestBySpecialty[].trends[].name",
+    "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\ntrends: với mỗi khối, chỉ so sánh chỉ số của lượt đó với lượt trước cùng specialty khi có đủ hai mốc; trả name, from, fromDate, to và toDate.\nKhông đủ hai mốc cùng specialty thì trends=[]. Không sinh câu 'ổn định', 'cải thiện' hoặc 'xấu đi'.\nKhông so sánh chéo chuyên khoa trong trends.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template trends\n                  \"name\": \"HbA1c\",\n                  \"from\": \"8.6%\",\n                  \"fromDate\": \"2026-01-10\",\n                  \"to\": \"7.1%\",\n                  \"toDate\": \"2026-03-21\""
   },
@@ -644,6 +702,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].trends[].from",
     "Data type output": "string",
     "CÁCH MAP": "Giá trị chỉ số tại lượt trước cùng khoa, giữ đơn vị.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].visit_date; visits[].specialty; visits[].vitals; visits[].labs.paraclinical_result; visits[].labs.abnormal_result\n2. Xử lý:\nVới mỗi trend, lấy giá trị và đơn vị của chỉ số ở lượt trước cùng khoa làm from.\n3. Ghi kết quả vào: data.summary.sections[order=3].latestBySpecialty[].trends[].from",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\ntrends: với mỗi khối, chỉ so sánh chỉ số của lượt đó với lượt trước cùng specialty khi có đủ hai mốc; trả name, from, fromDate, to và toDate.\nKhông đủ hai mốc cùng specialty thì trends=[]. Không sinh câu 'ổn định', 'cải thiện' hoặc 'xấu đi'.\nKhông so sánh chéo chuyên khoa trong trends.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template trends\n                  \"name\": \"HbA1c\",\n                  \"from\": \"8.6%\",\n                  \"fromDate\": \"2026-01-10\",\n                  \"to\": \"7.1%\",\n                  \"toDate\": \"2026-03-21\""
@@ -655,6 +714,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].trends[].fromDate",
     "Data type output": "string",
     "CÁCH MAP": "visit_date của lượt trước cùng khoa.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].visit_date; visits[].specialty; visits[].vitals; visits[].labs.paraclinical_result; visits[].labs.abnormal_result\n2. Xử lý:\nVới mỗi trend, lấy visit_date của lượt trước cùng khoa làm fromDate.\n3. Ghi kết quả vào: data.summary.sections[order=3].latestBySpecialty[].trends[].fromDate",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\ntrends: với mỗi khối, chỉ so sánh chỉ số của lượt đó với lượt trước cùng specialty khi có đủ hai mốc; trả name, from, fromDate, to và toDate.\nKhông đủ hai mốc cùng specialty thì trends=[]. Không sinh câu 'ổn định', 'cải thiện' hoặc 'xấu đi'.\nKhông so sánh chéo chuyên khoa trong trends.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template trends\n                  \"name\": \"HbA1c\",\n                  \"from\": \"8.6%\",\n                  \"fromDate\": \"2026-01-10\",\n                  \"to\": \"7.1%\",\n                  \"toDate\": \"2026-03-21\""
@@ -666,6 +726,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].trends[].to",
     "Data type output": "string",
     "CÁCH MAP": "Giá trị cùng chỉ số tại lượt đang xét, giữ đơn vị.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].visit_date; visits[].specialty; visits[].vitals; visits[].labs.paraclinical_result; visits[].labs.abnormal_result\n2. Xử lý:\nVới mỗi trend, lấy giá trị và đơn vị của cùng chỉ số ở lượt đang xét làm to.\n3. Ghi kết quả vào: data.summary.sections[order=3].latestBySpecialty[].trends[].to",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\ntrends: với mỗi khối, chỉ so sánh chỉ số của lượt đó với lượt trước cùng specialty khi có đủ hai mốc; trả name, from, fromDate, to và toDate.\nKhông đủ hai mốc cùng specialty thì trends=[]. Không sinh câu 'ổn định', 'cải thiện' hoặc 'xấu đi'.\nKhông so sánh chéo chuyên khoa trong trends.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template trends\n                  \"name\": \"HbA1c\",\n                  \"from\": \"8.6%\",\n                  \"fromDate\": \"2026-01-10\",\n                  \"to\": \"7.1%\",\n                  \"toDate\": \"2026-03-21\""
@@ -677,6 +738,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=3].latestBySpecialty[].trends[].toDate",
     "Data type output": "string",
     "CÁCH MAP": "visit_date của lượt đang xét.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].visit_date; visits[].specialty; visits[].vitals; visits[].labs.paraclinical_result; visits[].labs.abnormal_result\n2. Xử lý:\nVới mỗi trend, lấy visit_date của lượt đang xét làm toDate.\n3. Ghi kết quả vào: data.summary.sections[order=3].latestBySpecialty[].trends[].toDate",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\ntrends: với mỗi khối, chỉ so sánh chỉ số của lượt đó với lượt trước cùng specialty khi có đủ hai mốc; trả name, from, fromDate, to và toDate.\nKhông đủ hai mốc cùng specialty thì trends=[]. Không sinh câu 'ổn định', 'cải thiện' hoặc 'xấu đi'.\nKhông so sánh chéo chuyên khoa trong trends.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template trends\n                  \"name\": \"HbA1c\",\n                  \"from\": \"8.6%\",\n                  \"fromDate\": \"2026-01-10\",\n                  \"to\": \"7.1%\",\n                  \"toDate\": \"2026-03-21\""
@@ -688,7 +750,8 @@
     "OUTPUT FIELD": "data.summary.sections[order=4].followUpItems[]",
     "Data type output": "array<string>",
     "CÁCH MAP": "Lấy doctor_advice/treatment_plan của lượt được chọn và doctor_note của đơn còn hạn; gộp trùng, giữ khoa khi lời dặn riêng khoa.",
-    "Have AI": "",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
+    "Have AI": "Yes",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.6.1\nNguồn gồm plan.doctorAdvice và plan.treatmentPlan của lượt gần nhất và các lượt có đơn còn hiệu lực, cùng prescriptions[].doctorNote của các đơn còn hiệu lực.\nGiữ nguyên ý nguồn và gộp nội dung trùng; không tự bổ sung khuyến cáo hoặc tự quyết định nội dung nào còn phù hợp.\nNội dung chỉ áp dụng cho một chuyên khoa phải giữ tên chuyên khoa trong câu.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.6.4\nKhông tự tạo lịch hẹn, thời hạn theo dõi hoặc lời dặn từ kiến thức ngoài payload.\nKhông có dữ liệu thì followUpItems=[] và followUp=[]. EForm quyết định cách hiển thị trạng thái trống."
   },
@@ -699,6 +762,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=4].followUp[]",
     "Data type output": "array<object>",
     "CÁCH MAP": "Chỉ lịch hẹn của lượt được chọn theo 4.5.1; bỏ trùng khi cùng specialty và date; không có thì [].",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].plan.followup_date; visits[].visit_date; visits[].specialty\n2. Xử lý:\nDuyệt các lượt đã chọn ở No.32.\nLượt nào có followup_date thì tạo một lịch hẹn.\nBỏ lịch bị trùng khi cả specialty và ngày hẹn giống nhau.\nNếu không có lịch hẹn thì trả [].\n3. Ghi kết quả vào: data.summary.sections[order=4].followUp[]",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.6.2\nTrả từng lịch hẹn có trong plan.followupDate của các lượt được chọn; mỗi phần tử có specialty, date, valid và note. Chỉ khử trùng lặp khi specialty và date giống nhau.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.6.4\nKhông có dữ liệu thì followUpItems=[] và followUp=[]. EForm quyết định cách hiển thị trạng thái trống.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.1\nLượt khám có visitDate gần nhất trong toàn bộ visits[] luôn được đưa vào latestBySpecialty.\nBổ sung các lượt có ít nhất một thuốc trong prescriptions[] còn hiệu lực tại thời điểm tạo summary; nếu trùng lượt gần nhất thì chỉ giữ một khối . Không đặt giới hạn cứng số khối ngoài giới hạn tối đa 20 phiếu đầu vào."
@@ -710,6 +774,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=4].followUp[].specialty",
     "Data type output": "string",
     "CÁCH MAP": "Lấy khoa của phiếu ghi lịch hẹn, không dùng khoa đơn.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].specialty\n2. Xử lý:\nLấy specialty của chính lượt ghi nhận lịch hẹn.\nKhông lấy specialty từ đơn thuốc.\n3. Ghi kết quả vào: data.summary.sections[order=4].followUp[].specialty",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R13\nĐa chuyên khoa: one-liner dùng chung; latestBySpecialty chứa lượt gần nhất và các lượt có đơn thuốc còn hiệu lực; thuốc giữ specialty của đơn; followUp giữ specialty của lịch hẹn; trends và changesFromPrevious chỉ so sánh các lượt cùng chuyên khoa.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.6.2\nTrả từng lịch hẹn có trong plan.followupDate của các lượt được chọn; mỗi phần tử có specialty, date, valid và note. Chỉ khử trùng lặp khi specialty và date giống nhau."
@@ -721,6 +786,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=4].followUp[].date",
     "Data type output": "string (date hoặc rỗng)",
     "CÁCH MAP": "Trích ngày hẹn theo nguồn; mẫu output YYYY-MM-DD. Không đọc được vẫn giữ item với valid=false và note lý do.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].plan.followup_date\n2. Xử lý:\nĐọc followup_date từ đúng lượt khám.\nNếu đọc được thì định dạng thành YYYY-MM-DD.\nNếu không đọc được vẫn giữ lịch hẹn để valid = false và note ghi rõ lý do.\n3. Ghi kết quả vào: data.summary.sections[order=4].followUp[].date",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.6.2\nTrả từng lịch hẹn có trong plan.followupDate của các lượt được chọn; mỗi phần tử có specialty, date, valid và note. Chỉ khử trùng lặp khi specialty và date giống nhau.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.6.3\nvalid=true khi date đọc được và lớn hơn visitDate của phiếu ghi hẹn. Nếu ngày đã qua tại thời điểm tạo summary thì vẫn giữ valid=true và ghi 'Quá hạn' trong note.\nvalid=false khi date không đọc được hoặc nhỏ hơn/bằng visitDate; vẫn trả phần tử và ghi rõ lý do trong note.\nKhông đủ dữ liệu kiểm tra thì valid=false và note='Không đủ dữ liệu xác định tính hợp lệ'.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n              \"date\": \"2026-06-20\","
@@ -732,6 +798,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=4].followUp[].valid",
     "Data type output": "boolean",
     "CÁCH MAP": "true khi ngày hẹn đọc được và > ngày khám của phiếu; đã quá hạn vẫn true. <= ngày khám/không đọc được/thiếu dữ liệu: false.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].plan.followup_date; visits[].visit_date\n2. Xử lý:\nNếu followup_date và visit_date đều hợp lệ, đồng thời ngày hẹn sau ngày khám, đặt valid = true.\nCác trường hợp còn lại đặt valid = false.\nNgày hẹn đã quá hạn so với hôm nay vẫn được xem là hợp lệ.\n3. Ghi kết quả vào: data.summary.sections[order=4].followUp[].valid",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.6.3\nvalid=true khi date đọc được và lớn hơn visitDate của phiếu ghi hẹn. Nếu ngày đã qua tại thời điểm tạo summary thì vẫn giữ valid=true và ghi 'Quá hạn' trong note.\nvalid=false khi date không đọc được hoặc nhỏ hơn/bằng visitDate; vẫn trả phần tử và ghi rõ lý do trong note.\nKhông đủ dữ liệu kiểm tra thì valid=false và note='Không đủ dữ liệu xác định tính hợp lệ'."
@@ -743,6 +810,7 @@
     "OUTPUT FIELD": "data.summary.sections[order=4].followUp[].note",
     "Data type output": "string",
     "CÁCH MAP": "Quá hạn thì ghi Quá hạn; ngày sai/trùng/trước ngày khám ghi lý do; thiếu dữ liệu ghi “Không đủ dữ liệu xác định tính hợp lệ”; không ghi chú thì \"\".",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].plan.followup_date; visits[].visit_date; thời điểm tạo summary (hệ thống)\n2. Xử lý:\nNếu thiếu hoặc không đọc được ngày thì ghi \"Không đủ dữ liệu xác định tính hợp lệ\".\nNếu ngày hẹn bằng hoặc trước ngày khám thì ghi lý do không hợp lệ.\nNếu ngày hẹn hợp lệ nhưng đã qua thì ghi \"Quá hạn\".\nCác trường hợp khác trả chuỗi rỗng.\n3. Ghi kết quả vào: data.summary.sections[order=4].followUp[].note",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.6.3\nvalid=true khi date đọc được và lớn hơn visitDate của phiếu ghi hẹn. Nếu ngày đã qua tại thời điểm tạo summary thì vẫn giữ valid=true và ghi 'Quá hạn' trong note.\nvalid=false khi date không đọc được hoặc nhỏ hơn/bằng visitDate; vẫn trả phần tử và ghi rõ lý do trong note.\nKhông đủ dữ liệu kiểm tra thì valid=false và note='Không đủ dữ liệu xác định tính hợp lệ'."
@@ -754,7 +822,8 @@
     "OUTPUT FIELD": "data.timeline[]",
     "Data type output": "array<object>",
     "CÁCH MAP": "Tạo đủ mọi lượt hợp lệ trong request, sắp visit_date giảm dần; không chỉ dùng tập latestBySpecialty.",
-    "Have AI": "",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
+    "Have AI": "Yes",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.7\nMọi lượt khám hợp lệ xuất hiện trong timeline, ghi rõ visitDate, specialty và visitCode; sắp xếp visitDate giảm dần.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.1\nMọi lượt khám hợp lệ trong phạm vi, kể cả lượt không được chọn vào latestBySpecialty, vẫn phải xuất hiện trong timeline."
   },
@@ -765,6 +834,7 @@
     "OUTPUT FIELD": "data.timeline[].visitDate",
     "Data type output": "string",
     "CÁCH MAP": "out = in",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].visit_date\n2. Xử lý:\nSắp xếp tất cả lượt khám theo visit_date giảm dần. Với mỗi lượt, lấy visit_date làm timeline[].visitDate.\n3. Ghi kết quả vào: data.timeline[].visitDate",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.7\nMọi lượt khám hợp lệ xuất hiện trong timeline, ghi rõ visitDate, specialty và visitCode; sắp xếp visitDate giảm dần.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n        \"visitDate\": \"2026-03-21\","
@@ -776,6 +846,7 @@
     "OUTPUT FIELD": "data.timeline[].specialty",
     "Data type output": "string",
     "CÁCH MAP": "out = in",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].specialty\n2. Xử lý:\nVới mỗi lượt trong timeline, lấy specialty của chính lượt đó.\n3. Ghi kết quả vào: data.timeline[].specialty",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.7\nMọi lượt khám hợp lệ xuất hiện trong timeline, ghi rõ visitDate, specialty và visitCode; sắp xếp visitDate giảm dần.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n        \"specialty\": \"Phòng khám Nội\","
@@ -787,17 +858,19 @@
     "OUTPUT FIELD": "data.timeline[].visitCode",
     "Data type output": "string",
     "CÁCH MAP": "out = in",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].visit_code\n2. Xử lý:\nVới mỗi lượt trong timeline, lấy visit_code của chính lượt đó.\n3. Ghi kết quả vào: data.timeline[].visitCode",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.7\nMọi lượt khám hợp lệ xuất hiện trong timeline, ghi rõ visitDate, specialty và visitCode; sắp xếp visitDate giảm dần.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n        \"visitCode\": \"OPD-20260321-0007\","
   },
   {
     "No.": 73,
-    "INPUT FIELD": "visits[].chief_complaint; visits[].diagnosis.diagnosis_primary[]; visits[].diagnosis.diagnosis_comorbidities[]; visits[].diagnosis.diagnosis_text; visits[].history.medical_history; visits[].history.allergy",
+    "INPUT FIELD": "visits[].chief_complaint; visits[].diagnosis.diagnosis_primary[]; visits[].diagnosis.diagnosis_comorbidities[]; visits[].diagnosis.diagnosis_text; visits[].diagnosis.diagnosis_from_referring_facility; visits[].prescriptions[].diagnosis_on_prescription; visits[].history.medical_history; visits[].history.allergy",
     "Data type input": "mixed",
     "OUTPUT FIELD": "data.timeline[].summary",
     "Data type output": "string",
     "CÁCH MAP": "AI Tóm tắt lý do khám/vấn đề chính, chẩn đoán và sự kiện có căn cứ của lượt; không lấy nội dung lượt khác.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
     "Have AI": "Yes",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.9 — Mỗi mốc lượt khám\nvisitDate, specialty, visitCode, summary; details gồm clinical, paraclinical, diagnosis, treatment, prescription, specialtyFindings, changesFromPrevious và advice.\ntoàn bộ dữ liệu của lượt khám đó\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R2, R12\nChống bỏ sót bằng quy trình hai bước, không chỉ bằng nhắc nhở: (a) Bước trích xuất - liệt kê toàn bộ dữ kiện của từng lượt khám theo checklist trường bắt buộc (lý do khám, tiền sử, dị ứng, thuốc, từng vị trí/triệu chứng trong khám lâm sàng, cận lâm sàng, chẩn đoán, điều trị, lời dặn); (b) Bước viết - chỉ diễn đạt lại các dữ kiện đã trích, không lược bỏ dữ kiện nào có ý nghĩa lâm sàng. Khi bác sĩ ghi nhiều vị trí hoặc triệu chứng thì nêu đủ, không chọn một bỏ một. Kiểm chứng bằng cách đối chiếu số dữ kiện trích ra với số dữ kiện xuất hiện trong bản tóm tắt.\nMốc thời gian gắn đúng lượt khám: không gán nội dung lượt trước thành lượt hiện tại, không mô tả sai khoảng cách giữa các lượt.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n        \"summary\": \"Tái khám đái tháo đường type 2, kiểm soát đường huyết cải thiện.\",\n\nGhi chú đối chiếu (không phải trích dẫn PRD): PRD quy định nội dung đúng lượt và có field summary; không nêu một công thức riêng liệt kê chính xác các input để sinh summary."
@@ -809,6 +882,7 @@
     "OUTPUT FIELD": "data.timeline[].details.clinical",
     "Data type output": "string",
     "CÁCH MAP": "AI tổng hợp: Bệnh sử → sinh hiệu → khám thực thể; bảo toàn ý, nhãn/giá trị/đơn vị của lượt. temperature/bmi nằm ở đoạn này nếu cần giữ.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
     "Have AI": "Yes",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.7\ndetails.clinical theo thứ tự: bệnh sử -> dấu hiệu sinh tồn -> khám thực thể; chỉ dùng dữ liệu của đúng lượt.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\ntemperature và bmi: không có field riêng trong vitalSigns của response. Không tạo field mới; nếu cần giữ nội dung nguồn thì đưa vào timeline.details.clinical của đúng lượt.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R2\nChống bỏ sót bằng quy trình hai bước, không chỉ bằng nhắc nhở: (a) Bước trích xuất - liệt kê toàn bộ dữ kiện của từng lượt khám theo checklist trường bắt buộc (lý do khám, tiền sử, dị ứng, thuốc, từng vị trí/triệu chứng trong khám lâm sàng, cận lâm sàng, chẩn đoán, điều trị, lời dặn); (b) Bước viết - chỉ diễn đạt lại các dữ kiện đã trích, không lược bỏ dữ kiện nào có ý nghĩa lâm sàng. Khi bác sĩ ghi nhiều vị trí hoặc triệu chứng thì nêu đủ, không chọn một bỏ một. Kiểm chứng bằng cách đối chiếu số dữ kiện trích ra với số dữ kiện xuất hiện trong bản tóm tắt."
@@ -820,6 +894,7 @@
     "OUTPUT FIELD": "data.timeline[].details.paraclinical[].name",
     "Data type output": "string",
     "CÁCH MAP": "Trích tên xét nghiệm từ paraclinical_result khi rõ; không có tên tách được thì \"\".",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
     "Have AI": "Yes",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\nKết quả không nằm trong labs.abnormalResult không đưa vào abnormalResults; nội dung cận lâm sàng của lượt vẫn nằm trong timeline.details.paraclinical.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.7\nprescription, paraclinical, diagnosis, treatment, specialtyFindings và advice lấy từ đúng lượt; field không có dữ liệu dùng giá trị rỗng đúng contract.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 2.5 — input\n      \"labs\": { \"paraclinicalResult\": \"\", \"abnormalResult\": \"\" },\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n              \"name\": \"HbA1c\",\n              \"result\": \"7.1%\"\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R1\nKhông bịa. Mọi thông tin phải truy vết được về một trường dữ liệu trong payload. AI chỉ tổ chức lại nội dung, không tạo thông tin mới, không tự đặt ngưỡng y khoa."
@@ -831,6 +906,7 @@
     "OUTPUT FIELD": "data.timeline[].details.paraclinical[].result",
     "Data type output": "string",
     "CÁCH MAP": "Giữ kết quả/kết luận/đơn vị trong nguồn; tách từng xét nghiệm khi có căn cứ; không tự bổ sung ngưỡng.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
     "Have AI": "Yes",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\nKết quả không nằm trong labs.abnormalResult không đưa vào abnormalResults; nội dung cận lâm sàng của lượt vẫn nằm trong timeline.details.paraclinical.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.7\nprescription, paraclinical, diagnosis, treatment, specialtyFindings và advice lấy từ đúng lượt; field không có dữ liệu dùng giá trị rỗng đúng contract.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 2.5 — input\n      \"labs\": { \"paraclinicalResult\": \"\", \"abnormalResult\": \"\" },\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n              \"name\": \"HbA1c\",\n              \"result\": \"7.1%\"\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R1\nKhông bịa. Mọi thông tin phải truy vết được về một trường dữ liệu trong payload. AI chỉ tổ chức lại nội dung, không tạo thông tin mới, không tự đặt ngưỡng y khoa."
@@ -842,17 +918,19 @@
     "OUTPUT FIELD": "data.timeline[].details.diagnosis[].code",
     "Data type output": "string",
     "CÁCH MAP": "Gộp hai danh sách cùng lượt; khử trùng theo cặp code-name; không tự diễn giải ICD.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].diagnosis.diagnosis_primary[].code; visits[].diagnosis.diagnosis_comorbidities[].code\n2. Xử lý:\nTrong đúng lượt timeline, gộp chẩn đoán chính và bệnh kèm theo.\nBỏ trùng theo cặp code và name.\nSau đó lấy code của từng chẩn đoán.\n3. Ghi kết quả vào: data.timeline[].details.diagnosis[].code",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.7\nprescription, paraclinical, diagnosis, treatment, specialtyFindings và advice lấy từ đúng lượt; field không có dữ liệu dùng giá trị rỗng đúng contract.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R6\nChẩn đoán: khử trùng lặp theo mã ICD và tên; không tự diễn giải mã ICD. Nếu chẩn đoán văn bản của bác sĩ chứa thông tin mà mã ICD không phản ánh thì giữ nguyên phần văn bản.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n              \"code\": \"E11\",\n              \"description\": \"Đái tháo đường type 2\""
   },
   {
     "No.": 78,
-    "INPUT FIELD": "visits[].diagnosis.diagnosis_primary[].description; visits[].diagnosis.diagnosis_comorbidities[].description",
+    "INPUT FIELD": "visits[].diagnosis.diagnosis_primary[].name; visits[].diagnosis.diagnosis_comorbidities[].name; visits[].diagnosis.diagnosis_text",
     "Data type input": "string",
     "OUTPUT FIELD": "data.timeline[].details.diagnosis[].description",
     "Data type output": "string",
-    "CÁCH MAP": "Lấy trực tiếp từ trường description của diagnosis_primary và diagnosis_comorbidities (hoặc name nếu không có description).",
+    "CÁCH MAP": "Dùng tên chẩn đoán nguồn làm mô tả; giữ phần diagnosis_text có ý nghĩa chưa được phản ánh, chỉ gắn vào đúng chẩn đoán khi truy vết được.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].diagnosis.diagnosis_primary[].name; visits[].diagnosis.diagnosis_comorbidities[].name; visits[].diagnosis.diagnosis_text\n2. Xử lý:\nVới từng chẩn đoán của đúng lượt timeline, dùng name làm mô tả ban đầu.\nChỉ bổ sung diagnosis_text khi truy vết được tới đúng chẩn đoán và chưa bị lặp.\n3. Ghi kết quả vào: data.timeline[].details.diagnosis[].description",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.7\nprescription, paraclinical, diagnosis, treatment, specialtyFindings và advice lấy từ đúng lượt; field không có dữ liệu dùng giá trị rỗng đúng contract.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R6\nChẩn đoán: khử trùng lặp theo mã ICD và tên; không tự diễn giải mã ICD. Nếu chẩn đoán văn bản của bác sĩ chứa thông tin mà mã ICD không phản ánh thì giữ nguyên phần văn bản.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n              \"code\": \"E11\",\n              \"description\": \"Đái tháo đường type 2\""
@@ -864,9 +942,10 @@
     "OUTPUT FIELD": "data.timeline[].details.diagnosis[].name",
     "Data type output": "string",
     "CÁCH MAP": "out = in.name",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].diagnosis.diagnosis_primary[].name; visits[].diagnosis.diagnosis_comorbidities[].name\n2. Xử lý:\nVới mỗi chẩn đoán của đúng lượt timeline, lấy nguyên name.\n3. Ghi kết quả vào: data.timeline[].details.diagnosis[].name",
     "Have AI": "",
     "Comment": "",
-    "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 5\nPayload dưới đây là template cấu trúc response đã chốt. Giá trị chỉ để minh họa và không phải expected output của input tại mục 2.5. Không bổ sung field ngoài contract.\n              \"code\": \"E11\",\n              \"description\": \"Đái tháo đường type 2\"\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R6\nChẩn đoán: khử trùng lặp theo mã ICD và tên; không tự diễn giải mã ICD. Nếu chẩn đoán văn bản của bác sĩ chứa thông tin mà mã ICD không phản ánh thì giữ nguyên phần văn bản.\n"
+    "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 5\nPayload dưới đây là template cấu trúc response đã chốt. Giá trị chỉ để minh họa và không phải expected output của input tại mục 2.5. Không bổ sung field ngoài contract.\n              \"code\": \"E11\",\n              \"description\": \"Đái tháo đường type 2\"\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R6\nChẩn đoán: khử trùng lặp theo mã ICD và tên; không tự diễn giải mã ICD. Nếu chẩn đoán văn bản của bác sĩ chứa thông tin mà mã ICD không phản ánh thì giữ nguyên phần văn bản."
   },
   {
     "No.": 80,
@@ -875,6 +954,7 @@
     "OUTPUT FIELD": "data.timeline[].details.treatment[]",
     "Data type output": "array<string>",
     "CÁCH MAP": "Tách hướng điều trị của đúng lượt, bảo toàn ý nguồn.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].plan.treatment_plan\n2. Xử lý:\nLấy treatment_plan của đúng lượt timeline.\nTách thành các ý điều trị có nội dung.\nNếu không có dữ liệu thì trả [].\n3. Ghi kết quả vào: data.timeline[].details.treatment[]",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.7\nprescription, paraclinical, diagnosis, treatment, specialtyFindings và advice lấy từ đúng lượt; field không có dữ liệu dùng giá trị rỗng đúng contract.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 2.5 — input\n        \"treatmentPlan\": \"Uống thuốc theo đơn. Hẹn tái khám sau 4 tuần.\",\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n          \"treatment\": [\n            \"Tiếp tục điều trị ngoại trú\"\n          ],\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R2\nChống bỏ sót bằng quy trình hai bước, không chỉ bằng nhắc nhở: (a) Bước trích xuất - liệt kê toàn bộ dữ kiện của từng lượt khám theo checklist trường bắt buộc (lý do khám, tiền sử, dị ứng, thuốc, từng vị trí/triệu chứng trong khám lâm sàng, cận lâm sàng, chẩn đoán, điều trị, lời dặn); (b) Bước viết - chỉ diễn đạt lại các dữ kiện đã trích, không lược bỏ dữ kiện nào có ý nghĩa lâm sàng. Khi bác sĩ ghi nhiều vị trí hoặc triệu chứng thì nêu đủ, không chọn một bỏ một. Kiểm chứng bằng cách đối chiếu số dữ kiện trích ra với số dữ kiện xuất hiện trong bản tóm tắt."
@@ -885,10 +965,11 @@
     "Data type input": "string",
     "OUTPUT FIELD": "data.timeline[].details.prescription[]",
     "Data type output": "array<string>",
-    "CÁCH MAP": "Tóm tắt đơn thuốc của chính lượt; giữ tên, liều/cách dùng/thời hạn có ý nghĩa. Đối chiếu plan.prescription cùng lượt khi cần giữ dữ kiện, không tự trộn khác biệt hai nguồn.",
-    "Have AI": "Yes",
+    "CÁCH MAP": "Dùng cả prescriptions[].items[] và plan.prescription của đúng lượt khám. Với mỗi thuốc có cấu trúc, ghép các trường có dữ liệu gồm name, dosage_instruction, duration, route, quantity và note thành một chuỗi. Nếu plan.prescription có nội dung hợp lệ chưa xuất hiện trong danh sách thuốc có cấu trúc thì thêm nguyên văn nội dung đó vào kết quả; không tự suy diễn hoặc tạo thêm thông tin. Khử nội dung trùng lặp. Nếu cả hai nguồn đều không có dữ liệu hợp lệ thì trả về [].",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].prescriptions[].items[] và visits[].plan.prescription của đúng lượt timeline\n2. Xử lý:\nTạo một danh sách kết quả rỗng.\nVới mỗi thuốc trong prescriptions[].items[], lấy các trường có giá trị: name, dosage_instruction, duration, route, quantity và note.\nGhép các giá trị có sẵn thành một chuỗi mô tả thuốc, không tự tạo thêm nội dung, rồi thêm chuỗi đó vào danh sách kết quả.\nNếu plan.prescription có nội dung hợp lệ và nội dung đó chưa được phản ánh trong danh sách trên thì thêm nguyên văn plan.prescription vào kết quả.\nLoại bỏ nội dung trùng lặp. Nếu cả hai nguồn đều rỗng hoặc không có thông tin thì giữ danh sách rỗng [].\n3. Ghi danh sách kết quả vào: data.timeline[].details.prescription[]",
+    "Have AI": "",
     "Comment": "",
-    "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.7\nprescription, paraclinical, diagnosis, treatment, specialtyFindings và advice lấy từ đúng lượt; field không có dữ liệu dùng giá trị rỗng đúng contract.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\ntreatment và advice: treatment lấy từ plan.treatmentPlan; advice lấy từ plan.doctorAdvice. Đơn thuốc được xử lý tại byPrescription và timeline.details.prescription, không dùng để tạo nhận định điều trị mới.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 2.4\nDanh sách thuốc: name (tên và hàm lượng), dosageInstruction (liều và cách dùng, nguyên văn), route, quantity, duration, note\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 2.5 — input\n        \"prescription\": \"Losartan 50mg 1 viên/lần x 1 lần/ngày (sáng, sau ăn)\",\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n          \"prescription\": [\n            \"Metformin 1000mg x2/ngày (28 ngày)\"\n          ],\n\nGhi chú đối chiếu (không phải trích dẫn PRD): PRD không nêu quy tắc ưu tiên/đối chiếu chi tiết giữa plan.prescription và prescriptions[] khi hai nguồn khác nhau."
+    "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.7\nprescription, paraclinical, diagnosis, treatment, specialtyFindings và advice lấy từ đúng lượt; field không có dữ liệu dùng giá trị rỗng đúng contract.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\ntreatment và advice: treatment lấy từ plan.treatmentPlan; advice lấy từ plan.doctorAdvice. Đơn thuốc được xử lý tại byPrescription và timeline.details.prescription, không dùng để tạo nhận định điều trị mới.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 2.4\nDanh sách thuốc: name (tên và hàm lượng), dosageInstruction (liều và cách dùng, nguyên văn), route, quantity, duration, note\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 2.5 — input\n        \"prescription\": \"Losartan 50mg 1 viên/lần x 1 lần/ngày (sáng, sau ăn)\",\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n          \"prescription\": [\n            \"Metformin 1000mg x2/ngày (28 ngày)\"\n          ],\n\nGhi chú đối chiếu (không phải trích dẫn PRD): PRD không nêu quy tắc ưu tiên/đối chiếu chi tiết giữa plan.prescription và prescriptions[] khi hai nguồn khác nha"
   },
   {
     "No.": 82,
@@ -897,6 +978,7 @@
     "OUTPUT FIELD": "data.timeline[].details.specialtyFindings.obstetrics",
     "Data type output": "null / object chưa định nghĩa chi tiết",
     "CÁCH MAP": "Chỉ dùng nội dung examination của phiếu Sản; không tính tuổi thai hoặc suy đoán đã sinh; không áp dụng trả null.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
     "Have AI": "Yes",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.7\nprescription, paraclinical, diagnosis, treatment, specialtyFindings và advice lấy từ đúng lượt; field không có dữ liệu dùng giá trị rỗng đúng contract.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\nspecialtyFindings: obstetrics chỉ lấy nội dung khám chuyên khoa Sản có trong examination; pediatrics map bốn trường đánh giá Nhi. Nhóm không áp dụng dùng null hoặc object rỗng đúng template.\nKhông điền nội dung Sản/Nhi vào specialtyFindings của chuyên khoa khác để lấp field trống.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.3\nSản: chỉ sử dụng nội dung nguồn của lượt khám; không tự tính tuổi thai hiện tại và không kết luận còn mang thai hay đã sinh.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n                \"obstetrics\": null,\n\nGhi chú đối chiếu (không phải trích dẫn PRD): Template chỉ minh họa obstetrics=null, chưa định nghĩa object chi tiết khi có dữ liệu."
@@ -908,6 +990,7 @@
     "OUTPUT FIELD": "data.timeline[].details.specialtyFindings.pediatrics.nutrition",
     "Data type output": "string (parent object/null)",
     "CÁCH MAP": "out = in\nPhiếu Nhi, Khoa khác không điền nội dung Nhi;",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].examination.nutrition_assessment; visits[].specialty\n2. Xử lý:\nNếu lượt timeline thuộc khoa Nhi thì lấy nutrition_assessment.\nNếu không phải khoa Nhi thì trả chuỗi rỗng.\n3. Ghi kết quả vào: data.timeline[].details.specialtyFindings.pediatrics.nutrition",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.7\nprescription, paraclinical, diagnosis, treatment, specialtyFindings và advice lấy từ đúng lượt; field không có dữ liệu dùng giá trị rỗng đúng contract.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.3\nNhi: map nutritionAssessment, vaccinationAssessment, motorDevelopment và mentalDevelopment sang pediatrics; giữ nguyên nhận định của bác sĩ.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\nKhông điền nội dung Sản/Nhi vào specialtyFindings của chuyên khoa khác để lấp field trống.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n                  \"nutrition\": \"\","
@@ -919,6 +1002,7 @@
     "OUTPUT FIELD": "data.timeline[].details.specialtyFindings.pediatrics.vaccination",
     "Data type output": "string (parent object/null)",
     "CÁCH MAP": "out = in\nPhiếu Nhi, Khoa khác không điền nội dung Nhi;",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].examination.vaccination_assessment; visits[].specialty\n2. Xử lý:\nNếu lượt timeline thuộc khoa Nhi thì lấy vaccination_assessment.\nNếu không phải khoa Nhi thì trả chuỗi rỗng.\n3. Ghi kết quả vào: data.timeline[].details.specialtyFindings.pediatrics.vaccination",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.7\nprescription, paraclinical, diagnosis, treatment, specialtyFindings và advice lấy từ đúng lượt; field không có dữ liệu dùng giá trị rỗng đúng contract.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.3\nNhi: map nutritionAssessment, vaccinationAssessment, motorDevelopment và mentalDevelopment sang pediatrics; giữ nguyên nhận định của bác sĩ.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\nKhông điền nội dung Sản/Nhi vào specialtyFindings của chuyên khoa khác để lấp field trống.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n                  \"vaccination\": \"\","
@@ -930,6 +1014,7 @@
     "OUTPUT FIELD": "data.timeline[].details.specialtyFindings.pediatrics.motorDevelopment",
     "Data type output": "string (parent object/null)",
     "CÁCH MAP": "out = in\nPhiếu Nhi, Khoa khác không điền nội dung Nhi;",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].examination.motor_development; visits[].specialty\n2. Xử lý:\nNếu lượt timeline thuộc khoa Nhi thì lấy motor_development.\nNếu không phải khoa Nhi thì trả chuỗi rỗng.\n3. Ghi kết quả vào: data.timeline[].details.specialtyFindings.pediatrics.motorDevelopment",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.7\nprescription, paraclinical, diagnosis, treatment, specialtyFindings và advice lấy từ đúng lượt; field không có dữ liệu dùng giá trị rỗng đúng contract.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.3\nNhi: map nutritionAssessment, vaccinationAssessment, motorDevelopment và mentalDevelopment sang pediatrics; giữ nguyên nhận định của bác sĩ.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\nKhông điền nội dung Sản/Nhi vào specialtyFindings của chuyên khoa khác để lấp field trống.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n                  \"motorDevelopment\": \"\","
@@ -941,6 +1026,7 @@
     "OUTPUT FIELD": "data.timeline[].details.specialtyFindings.pediatrics.mentalDevelopment",
     "Data type output": "string (parent object/null)",
     "CÁCH MAP": "out = in\nPhiếu Nhi, Khoa khác không điền nội dung Nhi;",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].examination.mental_development; visits[].specialty\n2. Xử lý:\nNếu lượt timeline thuộc khoa Nhi thì lấy mental_development.\nNếu không phải khoa Nhi thì trả chuỗi rỗng.\n3. Ghi kết quả vào: data.timeline[].details.specialtyFindings.pediatrics.mentalDevelopment",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.7\nprescription, paraclinical, diagnosis, treatment, specialtyFindings và advice lấy từ đúng lượt; field không có dữ liệu dùng giá trị rỗng đúng contract.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.3\nNhi: map nutritionAssessment, vaccinationAssessment, motorDevelopment và mentalDevelopment sang pediatrics; giữ nguyên nhận định của bác sĩ.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\nKhông điền nội dung Sản/Nhi vào specialtyFindings của chuyên khoa khác để lấp field trống.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n                  \"mentalDevelopment\": \"\""
@@ -951,10 +1037,11 @@
     "Data type input": "mixed",
     "OUTPUT FIELD": "data.timeline[].details.changesFromPrevious[]",
     "Data type output": "array<string>",
-    "CÁCH MAP": "out = in\nPhiếu Nhi, Khoa khác không điền nội dung Nhi;",
-    "Have AI": "",
+    "CÁCH MAP": "So với lượt trước CÙNG specialty; chỉ ghi thay đổi có căn cứ, không suy ra ngừng thuốc do không còn xuất hiện. Không có lượt trước cùng khoa thì [].",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
+    "Have AI": "Yes",
     "Comment": "",
-    "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.7\nchangesFromPrevious chỉ so với lượt trước cùng specialty và chỉ ghi thay đổi truy vết được; không có mốc trước cùng specialty thì trả [].\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R8\nThuốc tách đúng hai nguồn byPrescription và selfReported; không tự đối chiếu hoặc kết luận thay bác sĩ. byPrescription gồm đơn gần nhất và thuốc của các đơn khác còn hạn. Thay đổi giữa các lượt chỉ ghi trong timeline.details.changesFromPrevious khi truy vết được từ nguồn.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.4\nSo sánh theo thời gian chỉ thể hiện trong trends và timeline.details.changesFromPrevious khi có đủ mốc nguồn cùng chuyên khoa.\n\nGhi chú đối chiếu (không phải trích dẫn PRD): CÁCH MAP hiện đang ghi nội dung về phiếu Nhi, không tương ứng với changesFromPrevious. Quy tắc đúng là so với lượt trước cùng specialty và chỉ ghi thay đổi truy vết được."
+    "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.7\nchangesFromPrevious chỉ so với lượt trước cùng specialty và chỉ ghi thay đổi truy vết được; không có mốc trước cùng specialty thì trả [].\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R8\nThuốc tách đúng hai nguồn byPrescription và selfReported; không tự đối chiếu hoặc kết luận thay bác sĩ. byPrescription gồm đơn gần nhất và thuốc của các đơn khác còn hạn. Thay đổi giữa các lượt chỉ ghi trong timeline.details.changesFromPrevious khi truy vết được từ nguồn.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.4\nSo sánh theo thời gian chỉ thể hiện trong trends và timeline.details.changesFromPrevious khi có đủ mốc nguồn cùng chuyên khoa.\n"
   },
   {
     "No.": 88,
@@ -963,7 +1050,8 @@
     "OUTPUT FIELD": "data.timeline[].details.advice[]",
     "Data type output": "array<string>",
     "CÁCH MAP": "Giữ lời dặn có căn cứ của chính lượt, nêu lịch hẹn theo nguồn; không tự tạo khuyến cáo. Phân loại treatment_plan vào treatment, tránh lặp lời dặn nếu không cần.",
-    "Have AI": "",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "",
+    "Have AI": "Yes",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.7\nprescription, paraclinical, diagnosis, treatment, specialtyFindings và advice lấy từ đúng lượt; field không có dữ liệu dùng giá trị rỗng đúng contract.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R1, R2\nKhông bịa. Mọi thông tin phải truy vết được về một trường dữ liệu trong payload. AI chỉ tổ chức lại nội dung, không tạo thông tin mới, không tự đặt ngưỡng y khoa.\nChống bỏ sót bằng quy trình hai bước, không chỉ bằng nhắc nhở: (a) Bước trích xuất - liệt kê toàn bộ dữ kiện của từng lượt khám theo checklist trường bắt buộc (lý do khám, tiền sử, dị ứng, thuốc, từng vị trí/triệu chứng trong khám lâm sàng, cận lâm sàng, chẩn đoán, điều trị, lời dặn); (b) Bước viết - chỉ diễn đạt lại các dữ kiện đã trích, không lược bỏ dữ kiện nào có ý nghĩa lâm sàng. Khi bác sĩ ghi nhiều vị trí hoặc triệu chứng thì nêu đủ, không chọn một bỏ một. Kiểm chứng bằng cách đối chiếu số dữ kiện trích ra với số dữ kiện xuất hiện trong bản tóm tắt.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 2.5 — input\n        \"doctorAdvice\": \"Ăn nhạt, hạn chế rượu bia, đo huyết áp tại nhà...\",\n        \"followupDate\": \"2026-08-20 11:44:00\"\n          \"doctorNote\": \"Tái khám sau 4 tuần, mang theo sổ đo huyết áp\"\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5 — template response\n          \"advice\": [\n            \"Tuân thủ điều trị\",\n            \"Kiểm soát chế độ ăn và luyện tập\",\n            \"Tái khám theo lịch hẹn\"\n          ]\n\nGhi chú đối chiếu (không phải trích dẫn PRD): PRD chưa mô tả riêng phép gộp bốn nguồn ở cột INPUT FIELD cho timeline.details.advice; các nguồn phải thuộc đúng lượt."
   },
@@ -974,6 +1062,7 @@
     "OUTPUT FIELD": "errors",
     "Data type output": "object",
     "CÁCH MAP": "Không lỗi trả {}; có lỗi trả object theo contract xử lý lỗi.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: Kết quả xử lý/validation của hệ thống\n2. Xử lý:\nNếu hệ thống không phát hiện lỗi thì trả errors = {}.\nNếu có lỗi thì tạo object lỗi theo cấu trúc đã quy định.\n3. Ghi kết quả vào: errors",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 5\n  \"errors\": {}\nResponse tại mục 5 là contract đầu ra duy nhất. Mọi field phải xuất hiện; khi không có dữ liệu dùng giá trị rỗng đúng kiểu (chuỗi rỗng, [], null hoặc {}). errors luôn là object và chỉ chứa nội dung khi có lỗi xử lý."
@@ -985,6 +1074,7 @@
     "OUTPUT FIELD": "Không có field đầu ra trực tiếp",
     "Data type output": "—",
     "CÁCH MAP": "",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: patient.pseudo_id\n2. Xử lý:\nKhông ánh xạ patient.pseudo_id ra field trực tiếp trong response.\n3. Ghi kết quả vào: Không có field đầu ra trực tiếp",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 2.5 — input\n  \"patient\": { \"pseudoId\": \"1ae82d07...70d8\", \"age\": 79, \"gender\": \"male\" },\n\nNguồn: PRD Patient Summary.docx — Phần II, Phụ lục D — kiểm tra dữ liệu\nKiểm tra request chỉ chứa thông tin được phép theo contract; không gửi họ tên, số điện thoại hoặc định danh trực tiếp ngoài pseudoId\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5\nPayload dưới đây là template cấu trúc response đã chốt. Giá trị chỉ để minh họa và không phải expected output của input tại mục 2.5. Không bổ sung field ngoài contract.\n\nGhi chú đối chiếu (không phải trích dẫn PRD): pseudoId có trong input, không có field trả trực tiếp tương ứng trong response mục 5."
@@ -996,6 +1086,7 @@
     "OUTPUT FIELD": "Không có field đầu ra trực tiếp",
     "Data type output": "—",
     "CÁCH MAP": "",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].clinic\n2. Xử lý:\nKhông ánh xạ visits[].clinic ra field trực tiếp trong response.\n3. Ghi kết quả vào: Không có field đầu ra trực tiếp",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 2.2\nclinic\nTên phòng khám cụ thể trong chuyên khoa, để rỗng nếu không có\nPhân biệt phòng khám khi một chuyên khoa có nhiều đơn vị khám\nLưu ý: formStatus chỉ dùng tại bước lọc phía EForm và không thuộc payload. Trong payload, lượt khám được nhận diện bằng visitCode; specialty và clinic giữ nguyên giá trị từ nguồn.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 2.5 — input\n      \"clinic\": \"Phòng khám nhi đa khoa\",  <-- MỚI: tên phòng khám trong chuyên khoa (nếu có)\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 5\nPayload dưới đây là template cấu trúc response đã chốt. Giá trị chỉ để minh họa và không phải expected output của input tại mục 2.5. Không bổ sung field ngoài contract.\n\nGhi chú đối chiếu (không phải trích dẫn PRD): clinic không có field trả trực tiếp tương ứng trong response mục 5."
@@ -1007,6 +1098,7 @@
     "OUTPUT FIELD": "Không có field đầu ra trực tiếp",
     "Data type output": "—",
     "CÁCH MAP": "",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].history.current_medications[].last_dose_date\n2. Xử lý:\nKhông ánh xạ current_medications[].last_dose_date ra field trực tiếp trong response.\n3. Ghi kết quả vào: Không có field đầu ra trực tiếp",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 4.4\nselfReported: lấy từ history.currentMedications[]; trả name, dosage, route và askedDate. askedDate là visitDate của phiếu ghi nhận. lastDoseDate không có field tương ứng trong response và không được tự gộp vào field khác."
@@ -1018,6 +1110,7 @@
     "OUTPUT FIELD": "Không có field đầu ra trực tiếp",
     "Data type output": "—",
     "CÁCH MAP": "",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].prescriptions[].prescriber\n2. Xử lý:\nKhông ánh xạ prescriptions[].prescriber ra field trực tiếp trong response.\n3. Ghi kết quả vào: Không có field đầu ra trực tiếp",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 2.4\nprescriber\nBác sĩ kê đơn\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 2.5 — input\n          \"prescriber\": \"hoadtq1\",\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.4\nField đầu ra: name, dosage, frequency, prescribedDate, prescriptionCode, specialty và durationEndDate. dosage và frequency chỉ tách khi dosageInstruction đủ rõ; không tách được thì dùng chuỗi rỗng.\n\nGhi chú đối chiếu (không phải trích dẫn PRD): prescriber có trong input, không có field trả trực tiếp tương ứng trong response mục 5."
@@ -1026,9 +1119,10 @@
     "No.": 94,
     "INPUT FIELD": "visits[].prescriptions[].diagnosis_on_prescription",
     "Data type input": "string",
-    "OUTPUT FIELD": "Không có field đầu ra trực tiếp",
+    "OUTPUT FIELD": "data.summary.oneLiner; data.summary.sections[order=1].items[].content; data.timeline[].summary",
     "Data type output": "—",
-    "CÁCH MAP": "",
+    "CÁCH MAP": "Dùng làm nguồn gián tiếp cho oneLiner, Tiền sử nền và timeline summary; không tạo field output riêng.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].prescriptions[].diagnosis_on_prescription\n2. Xử lý:\nTHEO XÁC NHẬN DEV: dùng làm nguồn gián tiếp cho oneLiner, nội dung Tiền sử nền và timeline.\nLưu ý: PRD không quy định field output trực tiếp cho nguồn này, nên không tạo output riêng.\n3. Ghi gián tiếp vào ngữ cảnh của: data.summary.oneLiner; data.summary.sections[order=1].items[].content; data.timeline[].summary",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 2.4\ndiagnosisOnPrescription\nChẩn đoán ghi trên đơn\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 2.5 — input\n          \"diagnosisOnPrescription\": \"Tăng huyết áp vô căn (I10)\",\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\ndiagnoses: lấy diagnosisPrimary và diagnosisComorbidities; trả code và description, khử trùng lặp theo cặp mã - tên.\n\nGhi chú đối chiếu (không phải trích dẫn PRD): diagnosisOnPrescription có trong input nhưng không có field trả trực tiếp. Nguồn diagnoses được mục 4.5.2 chỉ định là diagnosisPrimary và diagnosisComorbidities."
@@ -1039,7 +1133,8 @@
     "Data type input": "string",
     "OUTPUT FIELD": "Không có field đầu ra trực tiếp",
     "Data type output": "—",
-    "CÁCH MAP": "",
+    "CÁCH MAP": "Có dùng để xét thuốc đó hết hạn chưa",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].prescriptions[].items[].stop_date\n2. Xử lý:\nTHEO XÁC NHẬN DEV: dùng stop_date để xác định thuốc còn hạn và hỗ trợ chọn thuốc/lượt khám.\nLưu ý: PRD cũ chưa mô tả rõ quy tắc này.\nKhông tạo field output riêng ở dòng này; durationEndDate đã được map tại No.27.\n3. Kết quả: dùng nội bộ cho điều kiện chọn dữ liệu",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 2.5 — input\n              \"stopDate\": \"2026-07-21 14:58:03\",\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.4\ndurationEndDate: tính từ prescribedDate và duration khi duration có số ngày rõ ràng; không đủ dữ liệu thì trả chuỗi rỗng, không ước lượng.\nKhông suy diễn: không tự kết luận ngừng thuốc, trùng hoạt chất, chống chỉ định hoặc chênh lệch giữa hai nguồn.\n\nGhi chú đối chiếu (không phải trích dẫn PRD): PRD có stopDate trong template input nhưng chưa mô tả quy tắc dùng stopDate để tính durationEndDate hoặc quyết định ngừng thuốc."
@@ -1048,9 +1143,10 @@
     "No.": 96,
     "INPUT FIELD": "visits[].diagnosis.diagnosis_from_referring_facility",
     "Data type input": "string",
-    "OUTPUT FIELD": "",
+    "OUTPUT FIELD": "data.summary.oneLiner; data.summary.sections[order=1].items[].content; data.timeline[].summary",
     "Data type output": "—",
-    "CÁCH MAP": "",
+    "CÁCH MAP": "Dùng làm nguồn gián tiếp cho oneLiner, Tiền sử nền và timeline summary; không tạo field output riêng.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].diagnosis.diagnosis_from_referring_facility\n2. Xử lý:\nTHEO XÁC NHẬN DEV: dùng làm nguồn gián tiếp cho oneLiner, nội dung Tiền sử nền và timeline.\nLưu ý: PRD hiện không định nghĩa field này, nên cần bảo đảm input contract thực tế có gửi nó.\n3. Ghi gián tiếp vào ngữ cảnh của: data.summary.oneLiner; data.summary.sections[order=1].items[].content; data.timeline[].summary",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 2.5 — khối diagnosis\n      \"diagnosis\": {\n        \"diagnosisPrimary\": [ { \"code\": \"I10\", \"name\": \"Tăng huyết áp vô căn\" } ],\n        \"diagnosisComorbidities\": [],\n        \"diagnosisText\": \"Tăng huyết áp vô căn, kiểm soát tốt\"\n      },\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R1\nKhông bịa. Mọi thông tin phải truy vết được về một trường dữ liệu trong payload. AI chỉ tổ chức lại nội dung, không tạo thông tin mới, không tự đặt ngưỡng y khoa.\n\nGhi chú đối chiếu (không phải trích dẫn PRD): Không tìm thấy field diagnosis_from_referring_facility hoặc diagnosisFromReferringFacility trong PRD; chưa có quy định mapping cho field này."
@@ -1062,6 +1158,7 @@
     "OUTPUT FIELD": "data.timeline[].details.diagnosis[].description và data.summary.sections[order=3].latestBySpecialty[].diagnoses[].description",
     "Data type output": "—",
     "CÁCH MAP": "out = in.description\nLấy nguyên mô tả chẩn đoán chính, giữ đúng chẩn đoán và lượt khám. Khối summary chỉ áp dụng cho lượt được chọn.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].diagnosis.diagnosis_primary[].description\n2. Xử lý:\nCẦN XÁC NHẬN INPUT CONTRACT: PRD minh họa diagnosis có code và name nhưng chưa định nghĩa description.\nNếu payload thực tế có description thì lấy nguyên mô tả của đúng chẩn đoán và đúng lượt.\n3. Ghi vào timeline diagnosis; chỉ ghi vào summary diagnosis khi lượt được chọn theo No.32",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 2.5 — khối diagnosis\n      \"diagnosis\": {\n        \"diagnosisPrimary\": [ { \"code\": \"I10\", \"name\": \"Tăng huyết áp vô căn\" } ],\n        \"diagnosisComorbidities\": [],\n        \"diagnosisText\": \"Tăng huyết áp vô căn, kiểm soát tốt\"\n      },\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R6\nChẩn đoán: khử trùng lặp theo mã ICD và tên; không tự diễn giải mã ICD. Nếu chẩn đoán văn bản của bác sĩ chứa thông tin mà mã ICD không phản ánh thì giữ nguyên phần văn bản.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\ndiagnoses: lấy diagnosisPrimary và diagnosisComorbidities; trả code và description, khử trùng lặp theo cặp mã - tên.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.7\nprescription, paraclinical, diagnosis, treatment, specialtyFindings và advice lấy từ đúng lượt; field không có dữ liệu dùng giá trị rỗng đúng contract.\n\nGhi chú đối chiếu (không phải trích dẫn PRD): Input contract minh họa code và name, không định nghĩa description trong phần tử diagnosisPrimary/diagnosisComorbidities. Chưa có căn cứ trực tiếp trong PRD cho công thức out = in.description; cần làm rõ contract input."
@@ -1073,6 +1170,7 @@
     "OUTPUT FIELD": "data.timeline[].details.diagnosis[].description và data.summary.sections[order=3].latestBySpecialty[].diagnoses[].description",
     "Data type output": "—",
     "CÁCH MAP": "out = in.description\nLấy nguyên mô tả bệnh kèm theo, giữ đúng chẩn đoán và lượt khám khi gộp với chẩn đoán chính. Khối summary chỉ áp dụng cho lượt được chọn.",
+    "CODE GIẢ DỄ HIỂU (Non-AI)": "1. Đọc dữ liệu từ: visits[].diagnosis.diagnosis_comorbidities[].description\n2. Xử lý:\nCẦN XÁC NHẬN INPUT CONTRACT: PRD minh họa diagnosis có code và name nhưng chưa định nghĩa description.\nNếu payload thực tế có description thì lấy nguyên mô tả bệnh kèm theo của đúng lượt.\n3. Ghi vào timeline diagnosis; chỉ ghi vào summary diagnosis khi lượt được chọn theo No.32",
     "Have AI": "",
     "Comment": "",
     "Mô tả PRD": "Nguồn: PRD Patient Summary.docx — Phần II, mục 2.5 — khối diagnosis\n      \"diagnosis\": {\n        \"diagnosisPrimary\": [ { \"code\": \"I10\", \"name\": \"Tăng huyết áp vô căn\" } ],\n        \"diagnosisComorbidities\": [],\n        \"diagnosisText\": \"Tăng huyết áp vô căn, kiểm soát tốt\"\n      },\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 3.1 — R6\nChẩn đoán: khử trùng lặp theo mã ICD và tên; không tự diễn giải mã ICD. Nếu chẩn đoán văn bản của bác sĩ chứa thông tin mà mã ICD không phản ánh thì giữ nguyên phần văn bản.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.5.2\ndiagnoses: lấy diagnosisPrimary và diagnosisComorbidities; trả code và description, khử trùng lặp theo cặp mã - tên.\n\nNguồn: PRD Patient Summary.docx — Phần II, mục 4.7\nprescription, paraclinical, diagnosis, treatment, specialtyFindings và advice lấy từ đúng lượt; field không có dữ liệu dùng giá trị rỗng đúng contract.\n\nGhi chú đối chiếu (không phải trích dẫn PRD): Input contract minh họa code và name, không định nghĩa description trong phần tử diagnosisPrimary/diagnosisComorbidities. Chưa có căn cứ trực tiếp trong PRD cho công thức out = in.description; cần làm rõ contract input."

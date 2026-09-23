@@ -543,7 +543,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         # specialtyFindings.pediatrics (Non-AI, No.83-86)
         v_pediatrics = _build_pediatrics(v)
 
-        has_prev_same_specialty = False
+        previous_visit = None
         v_date_obj = parse_date(v.get("visit_date", ""))
         for other_v in visits:
             if other_v == v:
@@ -551,8 +551,32 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
             if other_v.get("specialty") == v.get("specialty"):
                 other_date_obj = parse_date(other_v.get("visit_date", ""))
                 if other_date_obj < v_date_obj and other_date_obj != datetime.min:
-                    has_prev_same_specialty = True
-                    break
+                    if previous_visit is None or other_date_obj > parse_date(previous_visit.get("visit_date", "")):
+                        previous_visit = other_v
+
+        has_changes_input = False
+        if previous_visit is not None:
+            # specialty/visit_date are only used to select the comparison pair.
+            # AI is called only when the same source group contains meaningful
+            # information in both the current and immediately previous visit.
+            current_history = v.get("history", {})
+            previous_history = previous_visit.get("history", {})
+            current_plan = v.get("plan", {})
+            previous_plan = previous_visit.get("plan", {})
+            comparable_inputs = [
+                (v.get("prescriptions", []), previous_visit.get("prescriptions", [])),
+                (current_plan.get("prescription"), previous_plan.get("prescription")),
+                (current_history.get("current_medications", []), previous_history.get("current_medications", [])),
+                (current_history.get("allergy"), previous_history.get("allergy")),
+                (v.get("vitals", {}), previous_visit.get("vitals", {})),
+                (v.get("labs", {}), previous_visit.get("labs", {})),
+                (v.get("diagnosis", {}), previous_visit.get("diagnosis", {})),
+                (v.get("examination", {}), previous_visit.get("examination", {})),
+            ]
+            has_changes_input = any(
+                not is_garbage(current_value) and not is_garbage(previous_value)
+                for current_value, previous_value in comparable_inputs
+            )
 
         timeline.append({
             "visitDate": v.get("visit_date", ""),
@@ -569,7 +593,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
                     "obstetrics": '' if is_garbage(v.get("examination", {}).get("obstetrics")) else "dt: str, len: >= 1",                       # AI (No.82)
                     "pediatrics": v_pediatrics                              # Non-AI (No.83-86) hoặc None
                 },
-                "changesFromPrevious": "dt: list, len: >= 1" if has_prev_same_specialty else [],                # AI (No.87)
+                "changesFromPrevious": "dt: list, len: >= 1" if has_changes_input else [],                     # AI (No.87)
                 "advice": v_advice                                          # AI (No.88)
             }
         })
