@@ -8,7 +8,18 @@ from typing import Any, Dict
 AI_LIST = "dt: list"
 AI_STR = "dt: str"
 
-GARBAGE_VALUES = {"không", "null", "none", "[]", "{}"}
+GARBAGE_VALUES = {
+    "",
+    "0",
+    "0.0",
+    "0/0",
+    "0/0 mmhg",
+    "không",
+    "null",
+    "none",
+    "[]",
+    "{}",
+}
 GARBAGE_PHRASES = (
     "chưa ghi nhận",
     "không ghi nhận",
@@ -19,19 +30,77 @@ GARBAGE_PHRASES = (
     "chưa ghi nhận bất thường",
     "không bất thường",
 )
+ALLERGY_NEGATIVE_PREFIXES = (
+    "chưa ghi nhận dị ứng",
+    "chưa ghi nhận tiền sử dị ứng",
+    "không ghi nhận dị ứng",
+    "không ghi nhận tiền sử dị ứng",
+    "không có dị ứng",
+    "không có tiền sử dị ứng",
+)
+ABNORMAL_RESULT_NEGATIVE_PREFIXES = (
+    "âm tính",
+    "negative",
+    "bình thường",
+    "không phát hiện",
+    "không có bất thường",
+    "không ghi nhận bất thường",
+    "chưa ghi nhận bất thường",
+)
+
+EXAMINATION_AI_FIELDS = (
+    "general_examination",
+    "specialty_examination",
+    "cardiovascular_respiratory_examination",
+    "other_systems_examination",
+    "nutrition_assessment",
+    "vaccination_assessment",
+    "motor_development",
+    "mental_development",
+)
+
+VITAL_AI_FIELDS = (
+    "pulse",
+    "temperature",
+    "blood_pressure",
+    "spo2",
+    "respiratory_rate",
+    "height_cm",
+    "weight_kg",
+    "bmi",
+)
 
 
 def parse_date(date_str):
     if not date_str:
         return datetime.min
-    if 'T' in date_str:
-        date_str = date_str.split('T')[0]
-    for fmt in ("%Y-%m-%d", "%d/%m/%Y"):
+
+    date_text = str(date_str).strip()
+    try:
+        parsed = datetime.fromisoformat(date_text.replace("Z", "+00:00"))
+        return datetime.combine(parsed.date(), datetime.min.time())
+    except ValueError:
+        pass
+
+    for fmt in ("%d/%m/%Y",):
         try:
-            return datetime.strptime(date_str, fmt)
+            return datetime.strptime(date_text, fmt)
         except ValueError:
             pass
     return datetime.min
+
+
+def _format_date(date_value):
+    date_obj = parse_date(date_value)
+    return "" if date_obj == datetime.min else date_obj.strftime("%Y-%m-%d")
+
+
+def _normalize_number(value, default=0):
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return default
+    return int(number) if number.is_integer() else number
 
 
 def format_sentence(text):
@@ -51,7 +120,7 @@ def _is_garbage(data):
     if isinstance(data, list):
         return all(_is_garbage(value) for value in data)
 
-    text = str(data).strip().lower()
+    text = str(data).strip().casefold()
     if text in GARBAGE_VALUES or text in GARBAGE_PHRASES:
         return True
 
@@ -59,6 +128,225 @@ def _is_garbage(data):
         phrase in text and len(text) <= len(phrase) + 15
         for phrase in GARBAGE_PHRASES
     )
+
+
+def _has_meaningful_data(data):
+    return not _is_garbage(data)
+
+
+def _ai_str_if(data):
+    return AI_STR if _has_meaningful_data(data) else ""
+
+
+def _ai_list_if(data):
+    return AI_LIST if _has_meaningful_data(data) else []
+
+
+def _is_obstetrics_visit(visit):
+    specialty = str(visit.get("specialty") or "").strip().casefold()
+    return "sản" in specialty
+
+
+def _get_examination_ai_inputs(visit):
+    examination = visit.get("examination") or {}
+    return [examination.get(field) for field in EXAMINATION_AI_FIELDS]
+
+
+def _get_diagnosis_ai_inputs(visit):
+    diagnosis = visit.get("diagnosis") or {}
+    return [
+        diagnosis.get("diagnosis_primary", []),
+        diagnosis.get("diagnosis_comorbidities", []),
+        diagnosis.get("diagnosis_text"),
+    ]
+
+
+def _get_prescription_ai_inputs(visit):
+    values = []
+    for prescription in visit.get("prescriptions") or []:
+        values.extend([
+            prescription.get("diagnosis_on_prescription"),
+            prescription.get("doctor_note"),
+        ])
+        for item in prescription.get("items") or []:
+            values.extend([
+                item.get("name"),
+                item.get("dosage_instruction"),
+                item.get("quantity"),
+            ])
+    return values
+
+
+def _is_meaningful_allergy(value):
+    if not _has_meaningful_data(value):
+        return False
+
+    text = str(value).strip().casefold()
+    return not text.startswith(ALLERGY_NEGATIVE_PREFIXES)
+
+
+def _get_allergy_ai_inputs(visits):
+    values = []
+    for visit in visits:
+        history = visit.get("history") or {}
+        allergy = history.get("allergy")
+        if _is_meaningful_allergy(allergy):
+            values.append(allergy)
+
+        for prescription in visit.get("prescriptions") or []:
+            prescription_allergy = prescription.get("allergy_on_prescription")
+            if _is_meaningful_allergy(prescription_allergy):
+                values.append(prescription_allergy)
+    return values
+
+
+def _has_meaningful_abnormal_result(value):
+    if not _has_meaningful_data(value):
+        return False
+
+    text = str(value).strip().casefold().rstrip(". ;,")
+    return not text.startswith(ABNORMAL_RESULT_NEGATIVE_PREFIXES)
+
+
+def _get_background_history_ai_inputs(visits):
+    values = []
+    for visit in visits:
+        history = visit.get("history") or {}
+        values.extend([
+            history.get("past_medical_history"),
+            history.get("medical_history"),
+        ])
+        values.extend(_get_diagnosis_ai_inputs(visit))
+    return values
+
+
+def _get_obstetric_history_ai_inputs(visits, field):
+    return [
+        (visit.get("history") or {}).get(field)
+        for visit in visits
+        if _is_obstetrics_visit(visit)
+    ]
+
+
+def _get_one_liner_ai_inputs(visits):
+    values = []
+    for visit in visits:
+        history = visit.get("history") or {}
+        labs = visit.get("labs") or {}
+        values.extend([
+            history.get("past_medical_history"),
+            visit.get("chief_complaint"),
+        ])
+        abnormal_result = labs.get("abnormal_result")
+        if _has_meaningful_abnormal_result(abnormal_result):
+            values.append(abnormal_result)
+        if _is_obstetrics_visit(visit):
+            values.append(history.get("obstetric_history"))
+        values.extend(_get_diagnosis_ai_inputs(visit))
+        values.extend(_get_prescription_ai_inputs(visit))
+
+    values.extend(_get_allergy_ai_inputs(visits))
+    return values
+
+
+def _get_timeline_summary_ai_inputs(visit):
+    history = visit.get("history") or {}
+    values = [
+        visit.get("chief_complaint"),
+        history.get("medical_history"),
+    ]
+    values.extend(_get_diagnosis_ai_inputs(visit))
+
+    allergy = history.get("allergy")
+    if _is_meaningful_allergy(allergy):
+        values.append(allergy)
+    return values
+
+
+def _get_timeline_clinical_ai_inputs(visit):
+    history = visit.get("history") or {}
+    vitals = visit.get("vitals") or {}
+    values = [history.get("medical_history")]
+    values.extend(vitals.get(field) for field in VITAL_AI_FIELDS)
+    values.extend(_get_examination_ai_inputs(visit))
+    return values
+
+
+def _get_follow_up_items_ai_inputs(selected_visits, now):
+    values = []
+    for visit in selected_visits:
+        plan = visit.get("plan") or {}
+        values.extend([
+            plan.get("doctor_advice"),
+            plan.get("treatment_plan"),
+        ])
+
+        for prescription in visit.get("prescriptions") or []:
+            if any(
+                _is_active_prescription_item(item, now)
+                for item in prescription.get("items") or []
+            ):
+                values.append(prescription.get("doctor_note"))
+    return values
+
+
+def _get_timeline_advice_ai_inputs(visit):
+    plan = visit.get("plan") or {}
+    values = [
+        plan.get("doctor_advice"),
+        plan.get("followup_date"),
+    ]
+    values.extend(
+        prescription.get("doctor_note")
+        for prescription in visit.get("prescriptions") or []
+    )
+    return values
+
+
+def _find_previous_same_specialty(current_visit, visits):
+    current_date = parse_date(current_visit.get("visit_date", ""))
+    if current_date == datetime.min:
+        return None
+
+    previous_visit = None
+    for candidate in visits:
+        if candidate is current_visit:
+            continue
+        if candidate.get("specialty") != current_visit.get("specialty"):
+            continue
+
+        candidate_date = parse_date(candidate.get("visit_date", ""))
+        if candidate_date == datetime.min or candidate_date >= current_date:
+            continue
+        if previous_visit is None or candidate_date > parse_date(previous_visit.get("visit_date", "")):
+            previous_visit = candidate
+    return previous_visit
+
+
+def _get_changes_from_previous_ai_value(current_visit, visits):
+    previous_visit = _find_previous_same_specialty(current_visit, visits)
+    if previous_visit is None:
+        return []
+
+    current_history = current_visit.get("history") or {}
+    previous_history = previous_visit.get("history") or {}
+    current_plan = current_visit.get("plan") or {}
+    previous_plan = previous_visit.get("plan") or {}
+    comparable_inputs = (
+        (current_visit.get("prescriptions", []), previous_visit.get("prescriptions", [])),
+        (current_plan.get("prescription"), previous_plan.get("prescription")),
+        (current_history.get("current_medications", []), previous_history.get("current_medications", [])),
+        (current_history.get("allergy"), previous_history.get("allergy")),
+        (current_visit.get("vitals", {}), previous_visit.get("vitals", {})),
+        (current_visit.get("labs", {}), previous_visit.get("labs", {})),
+        (current_visit.get("diagnosis", {}), previous_visit.get("diagnosis", {})),
+        (current_visit.get("examination", {}), previous_visit.get("examination", {})),
+    )
+    has_comparable_input = any(
+        _has_meaningful_data(current_value) and _has_meaningful_data(previous_value)
+        for current_value, previous_value in comparable_inputs
+    )
+    return AI_LIST if has_comparable_input else []
 
 
 def deduplicate_diagnoses(diags):
@@ -98,7 +386,7 @@ def deduplicate_diagnoses(diags):
 def _build_diagnoses(diagnosis):
     diagnoses = []
     for key in ("diagnosis_primary", "diagnosis_comorbidities"):
-        for item in diagnosis.get(key, []):
+        for item in diagnosis.get(key) or []:
             description = item.get("description")
             diagnoses.append({
                 "code": item.get("code", ""),
@@ -108,9 +396,11 @@ def _build_diagnoses(diagnosis):
     return deduplicate_diagnoses(diagnoses)
 
 
-def _build_treatment(plan):
+def _build_treatment(plan, *, split_items=True):
     treatment = []
-    for part in (plan.get("treatment_plan") or "").split(";"):
+    treatment_plan = plan.get("treatment_plan") or ""
+    parts = treatment_plan.split(";") if split_items else [treatment_plan]
+    for part in parts:
         part = part.strip()
         if part and not _is_garbage(part):
             treatment.append(format_sentence(part))
@@ -122,21 +412,21 @@ def _is_active_prescription_item(item, now):
     if not stop_date:
         return False
     stop_date_obj = parse_date(stop_date)
-    return stop_date_obj != datetime.min and stop_date_obj >= now
+    return stop_date_obj != datetime.min and stop_date_obj.date() >= now.date()
 
 
 def _has_active_prescription(visit, now):
     return any(
         _is_active_prescription_item(item, now)
-        for prescription in visit.get("prescriptions", [])
-        for item in prescription.get("items", [])
+        for prescription in visit.get("prescriptions") or []
+        for item in prescription.get("items") or []
     )
 
 
 def _build_prescription_summaries(visit):
     summaries = []
-    for prescription in visit.get("prescriptions", []):
-        for item in prescription.get("items", []):
+    for prescription in visit.get("prescriptions") or []:
+        for item in prescription.get("items") or []:
             name = str(item.get("name") or "").strip()
             if not name:
                 continue
@@ -277,8 +567,8 @@ def _compute_trends(current_visit, all_visits):
         "weight_kg": "Cân nặng"
     }
     
-    cur_vitals = current_visit.get("vitals", {})
-    prev_vitals = prev_visit.get("vitals", {})
+    cur_vitals = current_visit.get("vitals") or {}
+    prev_vitals = prev_visit.get("vitals") or {}
     
     for key, label in vital_map.items():
         cur_val = cur_vitals.get(key)
@@ -361,17 +651,16 @@ def _build_pediatrics(visit):
 
 
 def _build_obstetrics(visit):
-    """Chỉ trả nội dung khám chuyên khoa cho lượt khám Sản; khoa khác trả None."""
-    specialty = str(visit.get("specialty") or "").strip().casefold()
-    if "sản" not in specialty:
+    """Chỉ gọi AI cho nội dung khám Sản có nghĩa; không áp dụng trả None."""
+    if not _is_obstetrics_visit(visit):
         return None
 
     examination = visit.get("examination") or {}
     obstetrics = examination.get("specialty_examination")
-    if not isinstance(obstetrics, str) or not obstetrics.strip():
+    if not _has_meaningful_data(obstetrics):
         return None
 
-    return obstetrics.strip()
+    return AI_STR
 
 
 def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
@@ -392,27 +681,37 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         if spec and spec not in specialties:
             specialties.append(spec)
 
-    history = latest_visit.get("history", {})
+    history = latest_visit.get("history") or {}
     now = datetime.now()
     
     # ============================================================
     # 1. oneLiner (AI: Yes, No.5)
     # ============================================================
-    one_liner = AI_STR
+    one_liner = _ai_str_if(_get_one_liner_ai_inputs(visits))
     
     # ============================================================
     # 2. alerts (AI: Yes, No.6-12 — toàn bộ object là AI)
     # ============================================================
-    alerts = AI_LIST
+    alerts = _ai_list_if(_get_allergy_ai_inputs(visits))
 
     # ============================================================
     # 3. Section 1: Tiền sử nền
     # ============================================================
     # items (AI: Yes, No.15-16)
-    items = AI_LIST
+    items = _ai_list_if(_get_background_history_ai_inputs(visits))
     
     # familyHistory (AI: Yes, No.17 — Dev confirm Y)
-    family_history = AI_LIST
+    family_history = _ai_list_if([
+        (visit.get("history") or {}).get("family_history")
+        for visit in visits
+    ])
+
+    obstetric_history = _ai_str_if(
+        _get_obstetric_history_ai_inputs(visits, "obstetric_history")
+    )
+    menstrual_history = _ai_str_if(
+        _get_obstetric_history_ai_inputs(visits, "menstrual_history")
+    )
 
     # obstetricHistory (AI: Yes, No.18 — Dev confirm Y)
     # menstrualHistory (AI: Yes, No.19 — Dev confirm Y)
@@ -421,8 +720,8 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         "title": "Tiền sử nền",
         "items": items,
         "familyHistory": family_history,
-        "obstetricHistory": AI_STR,
-        "menstrualHistory": AI_STR
+        "obstetricHistory": obstetric_history,
+        "menstrualHistory": menstrual_history
     }
 
     # ============================================================
@@ -432,7 +731,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
     all_prescriptions = [
         prescription
         for visit in visits
-        for prescription in visit.get("prescriptions", [])
+        for prescription in visit.get("prescriptions") or []
     ]
     all_prescriptions.sort(key=lambda x: parse_date(x.get("prescribed_date", "")), reverse=True)
     latest_date_str = all_prescriptions[0].get("prescribed_date", "") if all_prescriptions else ""
@@ -442,7 +741,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
         prescribed_date = p.get("prescribed_date", "")
         is_latest = (prescribed_date == latest_date_str) and latest_date_str != ""
         
-        for item in p.get("items", []):
+        for item in p.get("items") or []:
             duration_end_date = item.get("stop_date")
             is_active = _is_active_prescription_item(item, now)
             
@@ -480,7 +779,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
             "route": m.get("route", ""),
             "askedDate": latest_visit.get("visit_date", "")
         }
-        for m in history.get("current_medications", [])
+        for m in history.get("current_medications") or []
     ]
 
     section_2 = {
@@ -503,10 +802,10 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
 
     latest_by_specialty = []
     for v_sel in selected_visits:
-        diagnoses_sel = _build_diagnoses(v_sel.get("diagnosis", {}))
+        diagnoses_sel = _build_diagnoses(v_sel.get("diagnosis") or {})
 
         # treatment (Non-AI, No.55): Tách hướng điều trị từ plan
-        v_plan_sel = v_sel.get("plan", {})
+        v_plan_sel = v_sel.get("plan") or {}
         treatment_sel = _build_treatment(v_plan_sel)
 
         # advice (Non-AI, No.56): Giữ nguyên lời dặn từ doctor_advice
@@ -516,29 +815,33 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
             advice_sel.append(format_sentence(advice_text))
 
         # vitalSigns (Non-AI, No.35-42)
-        vitals = v_sel.get("vitals", {})
-        pulse = vitals.get("pulse", 0)
-        pulse = float(pulse) if str(pulse).replace(".", "", 1).isdigit() else 0
+        vitals = v_sel.get("vitals") or {}
 
         latest_by_specialty.append({
             "visitDate": v_sel.get("visit_date", ""),
             "specialty": v_sel.get("specialty", ""),
             "vitalSigns": {
-                "pulse": pulse,
-                "temperature": float(vitals.get("temperature", "0") or 0),
+                "pulse": _normalize_number(vitals.get("pulse")),
+                "temperature": _normalize_number(vitals.get("temperature")),
                 "bloodPressure": str(vitals.get("blood_pressure", "")),
-                "spo2": int(vitals.get("spo2", "0") or 0),
-                "respiratoryRate": int(vitals.get("respiratory_rate", "0") or 0),
-                "weight": float(vitals.get("weight_kg", "0") or 0),
-                "height": float(vitals.get("height_cm", "0") or 0),
-                "bmi": float(vitals.get("bmi", "0") or 0)
+                "spo2": _normalize_number(vitals.get("spo2")),
+                "respiratoryRate": _normalize_number(vitals.get("respiratory_rate")),
+                "weight": _normalize_number(vitals.get("weight_kg")),
+                "height": _normalize_number(vitals.get("height_cm")),
+                "bmi": _normalize_number(vitals.get("bmi"))
             },
-            "clinicalFindings": AI_STR,                         # AI (No.43)
+            "clinicalFindings": _ai_str_if(_get_examination_ai_inputs(v_sel)),  # AI (No.43)
             "specialtyFindings": {
                 "obstetrics": _build_obstetrics(v_sel),        # Chỉ phiếu Sản; khoa khác trả null (No.44)
                 "pediatrics": _build_pediatrics(v_sel)                  # Non-AI (No.45-48) hoặc None
             },
-            "abnormalResults": AI_LIST,                         # AI (No.49-51)
+            "abnormalResults": (
+                AI_LIST
+                if _has_meaningful_abnormal_result(
+                    (v_sel.get("labs") or {}).get("abnormal_result")
+                )
+                else []
+            ),  # AI (No.49-51)
             "diagnoses": diagnoses_sel,
             "treatment": treatment_sel,
             "advice": advice_sel,
@@ -555,12 +858,14 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
     # 6. Section 4: Việc cần theo dõi tiếp
     # ============================================================
     # followUpItems (AI: Yes, No.63 — Dev confirm Y)
-    follow_up_items = AI_LIST
+    follow_up_items = _ai_list_if(
+        _get_follow_up_items_ai_inputs(selected_visits, now)
+    )
     
     # followUp (Non-AI, No.64-68)
     follow_up = []
     for lv in selected_visits:
-        lv_plan = lv.get("plan", {})
+        lv_plan = lv.get("plan") or {}
         if lv_plan.get("followup_date"):
             fu_date_str = lv_plan.get("followup_date", "")
             lv_visit_date_str = lv.get("visit_date", "")
@@ -575,21 +880,23 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
             elif fu_date_obj > lv_date_obj:
                 fu_valid = True
                 if fu_date_obj.date() < now.date():
-                    fu_note = f"quá hạn từ {fu_date_obj.strftime('%d/%m')}"
+                    fu_note = "Quá hạn"
             else:
                 fu_valid = False
                 fu_note = "Ngày hẹn không hợp lệ (trước hoặc bằng ngày khám)"
+
+            normalized_fu_date = _format_date(fu_date_str)
             
             # Khử trùng theo specialty + date
             is_duplicate = any(
                 existing["specialty"] == lv.get("specialty", "")
-                and existing["date"] == fu_date_str
+                and existing["date"] == normalized_fu_date
                 for existing in follow_up
             )
             if not is_duplicate:
                 follow_up.append({
                     "specialty": lv.get("specialty", ""),
-                    "date": fu_date_str,
+                    "date": normalized_fu_date,
                     "valid": fu_valid,
                     "note": fu_note
                 })
@@ -607,12 +914,12 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
     timeline = []
     for v in visits:
         # diagnosis (Non-AI, No.77-79)
-        v_diagnoses = _build_diagnoses(v.get("diagnosis", {}))
+        v_diagnoses = _build_diagnoses(v.get("diagnosis") or {})
         
-        v_plan = v.get("plan", {})
+        v_plan = v.get("plan") or {}
 
-        # treatment (Non-AI, No.80): Tách hướng điều trị, bảo toàn ý nguồn
-        v_treatment = _build_treatment(v_plan)
+        # treatment (Non-AI, No.80): Giữ toàn bộ treatment_plan trong một phần tử
+        v_treatment = _build_treatment(v_plan, split_items=False)
 
         # prescription (Non-AI, No.81 — Dev confirm N): Tóm tắt đơn thuốc của chính lượt
         v_presc = _build_prescription_summaries(v)
@@ -621,10 +928,10 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
             "visitDate": v.get("visit_date", ""),
             "specialty": v.get("specialty", ""),
             "visitCode": v.get("visit_code", ""),
-            "summary": AI_STR,                                     # AI (No.73)
+            "summary": _ai_str_if(_get_timeline_summary_ai_inputs(v)),  # AI (No.73)
             "details": {
-                "clinical": AI_STR,                                # AI (No.74)
-                "paraclinical": AI_LIST,                           # AI (No.75-76)
+                "clinical": _ai_str_if(_get_timeline_clinical_ai_inputs(v)),  # AI (No.74)
+                "paraclinical": _ai_list_if((v.get("labs") or {}).get("paraclinical_result")),  # AI (No.75-76)
                 "diagnosis": v_diagnoses,                                   # Non-AI (No.77-79)
                 "treatment": v_treatment,                                   # Non-AI (No.80)
                 "prescription": v_presc,                                    # Non-AI (No.81)
@@ -632,8 +939,8 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
                     "obstetrics": _build_obstetrics(v),            # Chỉ phiếu Sản; khoa khác trả null (No.82)
                     "pediatrics": _build_pediatrics(v)              # Non-AI (No.83-86)
                 },
-                "changesFromPrevious": AI_LIST,                     # AI (No.87)
-                "advice": AI_LIST                                  # AI (No.88)
+                "changesFromPrevious": _get_changes_from_previous_ai_value(v, visits),  # AI (No.87)
+                "advice": _ai_list_if(_get_timeline_advice_ai_inputs(v))  # AI (No.88)
             }
         })
 
