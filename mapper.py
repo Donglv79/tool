@@ -784,7 +784,7 @@ def map_patient_data(input_data: Dict[str, Any]) -> Dict[str, Any]:
 
     section_2 = {
         "order": 2,
-        "title": "Thuốc đang sử dụng",
+        "title": "Đơn thuốc",
         "byPrescription": by_prescription,
         "selfReported": self_reported
     }
